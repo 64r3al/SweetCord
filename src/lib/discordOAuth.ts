@@ -83,19 +83,33 @@ export async function completeDiscordOAuth(): Promise<DiscordProfile | null> {
   }
   if (!code) return null;
 
-  const exchangeEndpoint = import.meta.env.VITE_DISCORD_EXCHANGE_ENDPOINT?.trim();
+  const configuredEndpoint = import.meta.env.VITE_DISCORD_EXCHANGE_ENDPOINT?.trim();
   const redirectUri = import.meta.env.VITE_DISCORD_REDIRECT_URI?.trim();
   const supabasePublishableKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY?.trim();
-  if (!exchangeEndpoint || !redirectUri || !supabasePublishableKey) {
-    throw new Error("Discord sign-in is not fully configured. Set the exchange endpoint, redirect URI, and Supabase publishable key.");
+  const isLocalHost = window.location.hostname === "127.0.0.1" || window.location.hostname === "localhost";
+  const localEndpoint = new URL("/api/discord-oauth-exchange", window.location.origin).toString();
+  // Without a remote endpoint, local development uses a Vite-server-only test route.
+  // It is not present in production builds and only verifies identity for UI testing.
+  const exchangeEndpoint = configuredEndpoint || (
+    isLocalHost && window.location.port === "5173" ? localEndpoint : ""
+  );
+  const isLocalTestEndpoint = isLocalHost &&
+    window.location.port === "5173" &&
+    exchangeEndpoint === localEndpoint;
+
+  if (!exchangeEndpoint || !redirectUri) {
+    throw new Error("Discord sign-in is not configured. Set VITE_DISCORD_CLIENT_ID and VITE_DISCORD_REDIRECT_URI in .env.local.");
   }
+  if (!isLocalTestEndpoint && !supabasePublishableKey) {
+    throw new Error("The remote Discord sign-in endpoint needs VITE_SUPABASE_PUBLISHABLE_KEY in .env.local.");
+  }
+
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  if (supabasePublishableKey) headers.apikey = supabasePublishableKey;
 
   const response = await fetch(exchangeEndpoint, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      apikey: supabasePublishableKey
-    },
+    headers,
     body: JSON.stringify({ code, redirectUri })
   });
 
