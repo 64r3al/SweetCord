@@ -6,7 +6,6 @@ export type DiscordProfile = {
 };
 
 const STATE_KEY = "sweetcord.oauth.state";
-const VERIFIER_KEY = "sweetcord.oauth.pkce_verifier";
 const OAUTH_SCOPES = "identify";
 
 function base64Url(bytes: Uint8Array): string {
@@ -20,11 +19,6 @@ function base64Url(bytes: Uint8Array): string {
 function randomUrlSafeString(byteLength = 32): string {
   const bytes = crypto.getRandomValues(new Uint8Array(byteLength));
   return base64Url(bytes);
-}
-
-async function createCodeChallenge(verifier: string): Promise<string> {
-  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(verifier));
-  return base64Url(new Uint8Array(digest));
 }
 
 export function getDiscordAvatarUrl(profile: DiscordProfile): string | null {
@@ -45,12 +39,11 @@ export async function startDiscordOAuth(): Promise<void> {
     throw new Error("Secure browser cryptography is unavailable. Run SweetCord on localhost or HTTPS.");
   }
 
+  // The general Discord OAuth2 authorization-code docs document state but do not
+  // document PKCE for this flow. Keep state validation and perform the code
+  // exchange server-side with the confidential client secret.
   const state = randomUrlSafeString();
-  const verifier = randomUrlSafeString(48);
-  const challenge = await createCodeChallenge(verifier);
-
   sessionStorage.setItem(STATE_KEY, state);
-  sessionStorage.setItem(VERIFIER_KEY, verifier);
 
   const authorizeUrl = new URL("https://discord.com/oauth2/authorize");
   authorizeUrl.search = new URLSearchParams({
@@ -58,9 +51,7 @@ export async function startDiscordOAuth(): Promise<void> {
     redirect_uri: redirectUri,
     response_type: "code",
     scope: OAUTH_SCOPES,
-    state,
-    code_challenge: challenge,
-    code_challenge_method: "S256"
+    state
   }).toString();
 
   window.location.assign(authorizeUrl.toString());
@@ -86,29 +77,23 @@ export async function completeDiscordOAuth(): Promise<DiscordProfile | null> {
   if (!code) return null;
 
   const expectedState = sessionStorage.getItem(STATE_KEY);
-  const verifier = sessionStorage.getItem(VERIFIER_KEY);
-
   sessionStorage.removeItem(STATE_KEY);
-  sessionStorage.removeItem(VERIFIER_KEY);
 
   if (!returnedState || !expectedState || returnedState !== expectedState) {
     throw new Error("Sign-in validation failed (state mismatch). Please try again.");
   }
-  if (!verifier) {
-    throw new Error("The sign-in session expired. Please try again.");
-  }
 
-  const apiBase = import.meta.env.VITE_AUTH_API_BASE_URL?.trim();
+  const exchangeEndpoint = import.meta.env.VITE_DISCORD_EXCHANGE_ENDPOINT?.trim();
   const redirectUri = import.meta.env.VITE_DISCORD_REDIRECT_URI?.trim();
-  if (!apiBase || !redirectUri) {
+  if (!exchangeEndpoint || !redirectUri) {
     throw new Error("Discord authorization returned successfully, but the trusted code-exchange backend is not configured yet.");
   }
 
-  const response = await fetch(new URL("/auth/discord/exchange", apiBase), {
+  const response = await fetch(exchangeEndpoint, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     credentials: "include",
-    body: JSON.stringify({ code, codeVerifier: verifier, redirectUri })
+    body: JSON.stringify({ code, redirectUri })
   });
 
   if (!response.ok) {
