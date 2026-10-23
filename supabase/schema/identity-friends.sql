@@ -51,8 +51,10 @@ alter table public.profiles enable row level security;
 alter table public.friend_requests enable row level security;
 alter table public.friendships enable row level security;
 
-grant select, update on public.profiles to authenticated;
-grant select, insert, update on public.friend_requests to authenticated;
+grant select on public.profiles to authenticated;
+grant update (username, display_name) on public.profiles to authenticated;
+grant select, insert on public.friend_requests to authenticated;
+grant update (status) on public.friend_requests to authenticated;
 grant select, delete on public.friendships to authenticated;
 
 drop policy if exists "profiles_read_self_friends_and_request_peers" on public.profiles;
