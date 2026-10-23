@@ -92,8 +92,8 @@ class SweetCordDemo:
         self.clear_root()
         outer = tk.Frame(self.root, bg=BG)
         outer.pack(fill="both", expand=True)
-        header = tk.Frame(outer, bg=BG, padx=28, pady=20)
-        header.pack(fill="x")
+        header = tk.Frame(outer, bg=BG)
+        header.pack(fill="x", padx=28, pady=20)
         mark = tk.Label(header, text="S", width=2, height=1, bg="#2e2742",
                         fg="#e1d7ff", font=("Segoe UI", 17, "bold"), padx=3, pady=2)
         mark.pack(side="left")
@@ -103,8 +103,7 @@ class SweetCordDemo:
 
         center = tk.Frame(outer, bg=BG)
         center.pack(fill="both", expand=True)
-        card = tk.Frame(center, bg=PANEL, highlightbackground=LINE, highlightthickness=1,
-                        padx=35, pady=32)
+        card = tk.Frame(center, bg=PANEL, highlightbackground=LINE, highlightthickness=1)
         card.place(relx=0.5, rely=0.47, anchor="center", width=480)
 
         tk.Label(card, text="◈", bg="#29243a", fg=PURPLE,
@@ -124,8 +123,8 @@ class SweetCordDemo:
                    "Never paste a Discord user token into a third-party app.")
         self.label(card, warning, size=9, color=SOFT, justify="center",
                    anchor="center", wraplength=400).pack(pady=(22, 0))
-        footer = tk.Frame(outer, bg=BG, padx=28, pady=12)
-        footer.pack(fill="x", side="bottom")
+        footer = tk.Frame(outer, bg=BG)
+        footer.pack(fill="x", side="bottom", padx=28, pady=12)
         self.label(footer, "SWEETCORD · COMMUNITY PROTOTYPE", size=8, color=SOFT, bold=True).pack(side="left")
         self.label(footer, "LOCAL DEMO ONLY  •  NO ACCOUNT DATA", size=8, color=SOFT, bold=True).pack(side="right")
 
@@ -174,8 +173,8 @@ class SweetCordDemo:
         side = tk.Frame(shell, bg=PANEL, width=255)
         side.pack(side="left", fill="y")
         side.pack_propagate(False)
-        top = tk.Frame(side, bg=PANEL, padx=15, pady=18)
-        top.pack(fill="x")
+        top = tk.Frame(side, bg=PANEL)
+        top.pack(fill="x", padx=15, pady=18)
         self.label(top, "sweet", size=17, bold=True).pack(side="left")
         self.label(top, "cord", size=17, color=PURPLE, bold=True).pack(side="left")
         self.label(top, "DEMO", size=8, color=SOFT, bold=True).pack(side="right", pady=5)
@@ -186,8 +185,8 @@ class SweetCordDemo:
         else:
             self.render_dm_sidebar(side)
 
-        bottom = tk.Frame(side, bg="#101116", padx=11, pady=10)
-        bottom.pack(side="bottom", fill="x")
+        bottom = tk.Frame(side, bg="#101116")
+        bottom.pack(side="bottom", fill="x", padx=11, pady=10)
         tk.Label(bottom, text="S", bg="#423557", fg="#e0d6ff", width=3,
                  font=("Segoe UI", 10, "bold"), pady=6).pack(side="left")
         usercopy = tk.Frame(bottom, bg="#101116")
@@ -203,13 +202,13 @@ class SweetCordDemo:
         self.render_chat(main)
 
     def render_dm_sidebar(self, side: tk.Frame) -> None:
-        actions = tk.Frame(side, bg=PANEL, padx=12, pady=12)
-        actions.pack(fill="x")
+        actions = tk.Frame(side, bg=PANEL)
+        actions.pack(fill="x", padx=12, pady=12)
         self.button(actions, "＋  New message", self.create_dm, bg=PANEL_3,
                     fg="#ded9ed", anchor="w", padx=10, pady=10).pack(fill="x")
         self.section_heading(side, "DIRECT MESSAGES")
-        list_frame = tk.Frame(side, bg=PANEL, padx=8)
-        list_frame.pack(fill="x")
+        list_frame = tk.Frame(side, bg=PANEL)
+        list_frame.pack(fill="x", padx=8)
         for name in self.dm_names:
             active = self.active_chat == ("dm", name)
             display = {"Night Squad": "Night Squad", "Alex Rivera": "Alex Rivera",
@@ -223,8 +222,8 @@ class SweetCordDemo:
                         bg="#252332" if active else PANEL, fg=TEXT if active else "#b4b0c1",
                         anchor="w", padx=0, pady=10).pack(side="left", fill="x", expand=True)
         self.section_heading(side, "FRIENDS")
-        friend_list = tk.Frame(side, bg=PANEL, padx=13)
-        friend_list.pack(fill="x")
+        friend_list = tk.Frame(side, bg=PANEL)
+        friend_list.pack(fill="x", padx=13)
         for friend in self.friends:
             row = tk.Frame(friend_list, bg=PANEL)
             row.pack(fill="x", pady=4)
@@ -245,8 +244,8 @@ class SweetCordDemo:
         if not space:
             self.active_space = None
             return self.render_dm_sidebar(side)
-        header = tk.Frame(side, bg=PANEL, padx=15, pady=18)
-        header.pack(fill="x")
+        header = tk.Frame(side, bg=PANEL)
+        header.pack(fill="x", padx=15, pady=18)
         self.label(header, "YOUR SERVER" if space["kind"] == "server" else "PRIVATE GROUP",
                    size=8, color=SOFT, bold=True).pack(anchor="w")
         self.label(header, space["name"], size=14, bold=True, wraplength=215).pack(anchor="w", pady=(6, 0))
@@ -263,8 +262,8 @@ class SweetCordDemo:
                     bg=PANEL, fg=SOFT, anchor="w", padx=16, pady=9).pack(side="bottom", fill="x")
 
     def section_heading(self, parent: tk.Widget, title: str, command: Any = None) -> None:
-        bar = tk.Frame(parent, bg=PANEL, padx=15, pady=12)
-        bar.pack(fill="x")
+        bar = tk.Frame(parent, bg=PANEL)
+        bar.pack(fill="x", padx=15, pady=12)
         self.label(bar, title, size=8, color=SOFT, bold=True).pack(side="left")
         if command is not None:
             self.button(bar, "+", command, bg=PANEL, fg=SOFT, padx=6, pady=0,
@@ -280,8 +279,8 @@ class SweetCordDemo:
             title = "#" + channel_name
             subtitle = (space["name"] if space else "Your server") + "  /  TEXT CHANNEL"
 
-        topbar = tk.Frame(main, bg="#111219", padx=19, pady=13)
-        topbar.pack(fill="x")
+        topbar = tk.Frame(main, bg="#111219")
+        topbar.pack(fill="x", padx=19, pady=13)
         if mode == "channel":
             self.label(topbar, "#", size=17, color=SOFT, bold=True).pack(side="left", padx=(0, 10))
         else:
@@ -298,8 +297,8 @@ class SweetCordDemo:
         tk.Frame(main, bg=LINE, height=1).pack(fill="x")
         body = tk.Frame(main, bg=BG)
         body.pack(fill="both", expand=True)
-        intro = tk.Frame(body, bg=BG, padx=30, pady=25)
-        intro.pack(fill="x")
+        intro = tk.Frame(body, bg=BG)
+        intro.pack(fill="x", padx=30, pady=25)
         self.label(intro, "SWEETCORD / LOCAL PREVIEW", size=8, color=PURPLE, bold=True).pack(anchor="w")
         self.label(intro, title if mode == "dm" else f"Welcome to {title}",
                    size=22, bold=True, bg=BG).pack(anchor="w", pady=(8, 3))
@@ -327,8 +326,8 @@ class SweetCordDemo:
         canvas.update_idletasks()
         canvas.yview_moveto(1.0)
 
-        compose_shell = tk.Frame(main, bg=BG, padx=22, pady=(5, 10))
-        compose_shell.pack(fill="x")
+        compose_shell = tk.Frame(main, bg=BG)
+        compose_shell.pack(fill="x", padx=22, pady=(5, 10))
         self.label(compose_shell, "Message  ·  Enter to send  ·  Shift+Enter for a new line",
                    size=8, color=SOFT, bg=BG).pack(anchor="w", padx=5, pady=(0, 6))
         compose = tk.Frame(compose_shell, bg=PANEL_2, highlightbackground=LINE, highlightthickness=1)
@@ -343,16 +342,16 @@ class SweetCordDemo:
                                bg=PURPLE_DARK, active_bg="#7866ca", padx=14, pady=10,
                                font_size=13)
         send_btn.pack(side="right", fill="y", padx=7, pady=7)
-        footer = tk.Frame(main, bg="#111219", padx=17, pady=7)
-        footer.pack(fill="x", side="bottom")
+        footer = tk.Frame(main, bg="#111219")
+        footer.pack(fill="x", side="bottom", padx=0, pady=0)
         self.label(footer, "●  LOCAL DEMO  ·  NO DISCORD CONNECTION", size=8,
                    color=GREEN, bold=True, bg="#111219").pack(side="left")
         self.label(footer, "SWEETCORD COMMUNITY PROTOTYPE", size=8, color=SOFT,
                    bg="#111219").pack(side="right")
 
     def render_message(self, parent: tk.Frame, item: dict[str, str]) -> None:
-        row = tk.Frame(parent, bg=BG, padx=9, pady=8)
-        row.pack(fill="x")
+        row = tk.Frame(parent, bg=BG)
+        row.pack(fill="x", padx=9, pady=8)
         tk.Label(row, text=item["initial"], bg="#423557" if item["author"] == "You" else "#282a35",
                  fg="#e0d6ff" if item["author"] == "You" else "#d2cede", width=2,
                  font=("Segoe UI", 10, "bold"), pady=5).pack(side="left", anchor="n", padx=(0, 11))
