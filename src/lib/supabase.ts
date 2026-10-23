@@ -10,9 +10,9 @@ export const supabase = supabaseConfigured && projectUrl && publishableKey
       auth: {
         persistSession: true,
         autoRefreshToken: true,
-        // SweetCord owns a separate Discord identity-preview callback.
-        // Do not let Supabase consume that callback's query parameters.
-        detectSessionInUrl: false
+        // Supabase handles the OAuth callback and PKCE code exchange so real
+        // Discord sign-ins restore the authenticated SweetCord session.
+        detectSessionInUrl: true
       }
     })
   : null;
