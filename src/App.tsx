@@ -165,15 +165,18 @@ export default function App() {
     }
 
     let active = true;
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (active) {
+        setNativeSession(session);
+        setNativeAuthLoading(false);
+      }
+    });
+
     void supabase.auth.getSession().then(({ data, error }) => {
       if (!active) return;
       if (error) setNotice({ kind: "error", message: "Couldn't restore your SweetCord session. Sign in again if needed." });
       setNativeSession(data.session);
       setNativeAuthLoading(false);
-    });
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (active) setNativeSession(session);
     });
 
     return () => {
