@@ -183,6 +183,9 @@ export default function App() {
   }, []);
 
   useEffect(() => {
+    // When Supabase is configured, it owns the OAuth callback and PKCE exchange.
+    // The standalone identity-preview callback is only used without Supabase config.
+    if (supabase) return;
     if (callbackHandled.current) return;
     const params = new URLSearchParams(window.location.search);
     if (!params.has("code") && !params.has("error")) return;
@@ -217,13 +220,30 @@ export default function App() {
 
   const handleDiscordLogin = async () => {
     setNotice(null);
+    setBusy(true);
     try {
+      if (supabase) {
+        // Real SweetCord sign-in: Supabase manages the OAuth code exchange,
+        // PKCE/session lifecycle, and creates or restores the SweetCord account.
+        const { error } = await supabase.auth.signInWithOAuth({
+          provider: "discord",
+          options: { redirectTo: window.location.origin }
+        });
+        if (error) throw error;
+        return;
+      }
+
+      // Without a configured SweetCord backend, allow only profile-identity
+      // preview through the separate server-side code exchange—not a session.
       await startDiscordOAuth();
     } catch (error: unknown) {
       setNotice({
         kind: "error",
-        message: error instanceof Error ? error.message : "Could not start Discord sign-in."
+        message: error instanceof Error
+          ? error.message
+          : "Could not start Discord sign-in. Check the Supabase Discord provider configuration."
       });
+      setBusy(false);
     }
   };
 
