@@ -67,8 +67,8 @@ echo [INFO] Node.js version:
 node --version
 node --version >> "%LOG_FILE%" 2>&1
 echo [INFO] npm version:
-npm.cmd --version
-npm.cmd --version >> "%LOG_FILE%" 2>&1
+call npm.cmd --version
+call npm.cmd --version >> "%LOG_FILE%" 2>&1
 echo.
 
 if not exist "node_modules" (
