@@ -45,12 +45,15 @@ function localDiscordOAuthTestPlugin(env: Record<string, string>): Plugin {
           return;
         }
 
-        if (!(req.headers["content-type"] ?? "").toLowerCase().includes("application/json")) {
+        const contentTypeHeader = req.headers["content-type"];
+        const contentType = typeof contentTypeHeader === "string" ? contentTypeHeader : "";
+        if (!contentType.toLowerCase().includes("application/json")) {
           send(415, { error: "Expected JSON." });
           return;
         }
 
-        const contentLength = Number(req.headers["content-length"] ?? "0");
+        const rawContentLength = req.headers["content-length"];
+        const contentLength = Number(typeof rawContentLength === "string" ? rawContentLength : "0");
         if (Number.isFinite(contentLength) && contentLength > 8192) {
           send(413, { error: "Request is too large." });
           return;
