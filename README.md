@@ -26,6 +26,23 @@
 
 ## Run locally
 
+**Windows shortcut:** double-click [Launch SweetCord.bat](Launch%20SweetCord.bat) from the repository folder. It checks for Node.js/npm, installs dependencies on first launch if needed, and opens SweetCord in your browser. Keep the terminal window open while using the app.
+
+Manual setup, or setup on another operating system:
+
+1. Install a current Node.js LTS release.
+2. Clone this repository and copy `.env.example` to `.env.local`.
+3. Create a **dedicated SweetCord Supabase project** (do not use the unrelated Exam website project).
+4. Follow the setup steps below and configure the environment variables.
+5. From the repository folder, run:
+
+   ```bash
+   npm install
+   npm run dev
+   ```
+
+6. Open the local URL printed by Vite. The default redirect allowlist in the examples uses `http://127.0.0.1:5173`; use the exact local origin shown in your browser.
+
 1. Install a current Node.js LTS release.
 2. Clone this repository and copy `.env.example` to `.env.local`.
 3. Create a **dedicated SweetCord Supabase project** (do not use the unrelated Exam website project).
