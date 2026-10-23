@@ -22,30 +22,33 @@ SweetCord is an early-stage, lightweight, voice-first gaming communication app. 
 
 Demo mode uses a fixed local sample profile only. It does not read the Discord app, access Discord data, or create an authenticated session.
 
-## Configure Discord OAuth (profile identity only)
+## Configure Discord sign-in (real SweetCord sessions)
+
+With the Supabase project configured, **Continue with Discord** uses Supabase Auth's official Discord provider flow. This creates or restores a SweetCord account session rather than merely showing the Discord profile.
 
 1. Create an application in the [Discord Developer Portal](https://discord.com/developers/applications).
-2. Copy its **Application ID** into `VITE_DISCORD_CLIENT_ID`.
-3. Add the exact value of `VITE_DISCORD_REDIRECT_URI` to the application's OAuth2 redirect list. For local development, this is `http://127.0.0.1:5173/`.
-4. Deploy the `discord-oauth-exchange` Supabase Edge Function below.
-5. Set `VITE_DISCORD_EXCHANGE_ENDPOINT` to `https://YOUR_PROJECT_REF.supabase.co/functions/v1/discord-oauth-exchange`.
-6. Set `VITE_SUPABASE_PUBLISHABLE_KEY` to the project's public publishable key. It is sent only in the `apikey` header; never use a secret/service-role key in the frontend.
-7. Restart the Vite dev server and click **Continue with Discord**.
+2. In Supabase, open **Authentication → Sign In / Providers → Discord** and enable the provider.
+3. Copy the Supabase project's displayed callback URL (typically `https://YOUR_PROJECT_REF.supabase.co/auth/v1/callback`) and add it to the Discord application's OAuth2 Redirects.
+4. Add the Discord Application ID and Client Secret to the Supabase Discord provider settings and save.
+5. In Supabase Auth URL Configuration, allow the local app URL `http://127.0.0.1:5173` as a redirect URL (also add your production origin later).
+6. Configure `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` in `.env.local`, then restart `npm run dev`.
+7. Click **Continue with Discord** and authorize your dedicated test account. Supabase handles the OAuth code exchange and session lifecycle.
 
-The app requests only the `identify` scope. It confirms basic profile identity; it does not provide access to all existing Discord servers, DMs, or voice channels.
+The Discord button now has two safe modes:
 
-### Edge Function secrets
+- When the Supabase URL and publishable key are configured, it performs actual Discord OAuth sign-in to SweetCord. Supabase provider settings must be enabled.
+- If Supabase is not configured, it can use the standalone identity-preview path, provided `VITE_DISCORD_CLIENT_ID`, `VITE_DISCORD_REDIRECT_URI`, and `VITE_DISCORD_EXCHANGE_ENDPOINT` are configured. That fallback only verifies basic profile identity and does **not** create a signed-in SweetCord session.
 
-Configure these as Supabase Function secrets (never in `.env.local` or frontend code):
+### Optional standalone profile-preview fallback
+
+The fallback exchanges the short-lived OAuth code server-side and returns only basic profile fields. If you use it, configure these Supabase Edge Function secrets:
 
 - `DISCORD_CLIENT_ID` — same application ID as above
 - `DISCORD_CLIENT_SECRET` — from the Discord Developer Portal
 - `SWEETCORD_ALLOWED_ORIGIN` — exact frontend origin, e.g. `http://127.0.0.1:5173`
 - `SWEETCORD_ALLOWED_REDIRECT_URI` — exact redirect URI, e.g. `http://127.0.0.1:5173/`
 
-The browser calls the public Edge Function with the Supabase publishable key in the `apikey` header. The function explicitly checks the expected origin and redirect URI; the public key is not an authorization secret.
-
-Local function development can use `supabase/functions/.env`, excluded from source control. For a hosted project, add secrets through the Supabase dashboard or CLI.
+The browser calls the public Edge Function with the project's publishable key in the `apikey` header. The function validates the expected origin and exact redirect URI. The publishable key is not an authorization secret.
 
 ## Auth design and security
 
