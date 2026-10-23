@@ -1,5 +1,5 @@
 @echo off
-setlocal EnableExtensions
+setlocal EnableExtensions EnableDelayedExpansion
 title SweetCord Launcher
 cd /d "%~dp0"
 set "LOG_FILE=%~dp0sweetcord-launch.log"
@@ -76,9 +76,9 @@ if not exist "node_modules" (
   echo This needs an internet connection and may take a few minutes.
   echo.
   call npm.cmd install
-  set "INSTALL_CODE=%ERRORLEVEL%"
-  >> "%LOG_FILE%" echo npm install exit code: %INSTALL_CODE%
-  if not "%INSTALL_CODE%"=="0" (
+  set "INSTALL_CODE=!ERRORLEVEL!"
+  >> "%LOG_FILE%" echo npm install exit code: !INSTALL_CODE!
+  if not "!INSTALL_CODE!"=="0" (
     echo.
     echo [ERROR] npm install failed. Check the npm error above.
     exit /b 1
