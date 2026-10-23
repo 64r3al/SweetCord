@@ -85,13 +85,17 @@ export async function completeDiscordOAuth(): Promise<DiscordProfile | null> {
 
   const exchangeEndpoint = import.meta.env.VITE_DISCORD_EXCHANGE_ENDPOINT?.trim();
   const redirectUri = import.meta.env.VITE_DISCORD_REDIRECT_URI?.trim();
-  if (!exchangeEndpoint || !redirectUri) {
-    throw new Error("Discord authorization returned successfully, but the trusted code-exchange backend is not configured yet.");
+  const supabasePublishableKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY?.trim();
+  if (!exchangeEndpoint || !redirectUri || !supabasePublishableKey) {
+    throw new Error("Discord sign-in is not fully configured. Set the exchange endpoint, redirect URI, and Supabase publishable key.");
   }
 
   const response = await fetch(exchangeEndpoint, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      apikey: supabasePublishableKey
+    },
     body: JSON.stringify({ code, redirectUri })
   });
 
