@@ -129,10 +129,114 @@ declare
   chosen_username text;
   chosen_display_name text;
 begin
-  requested_username := lower(trim(coalesce(new.raw_user_meta_data ->> 'username', '')));
-  chosen_display_name := trim(coalesce(new.raw_user_meta_data ->> 'display_name', ''));
+  requested_username := lower(trim(coalesce(
+    new.raw_user_meta_data ->> 'username',
+    new.raw_user_meta_data ->> 'preferred_username',
+    ''
+  )));
+  chosen_display_name := trim(coalesce(
+    new.raw_user_meta_data ->> 'display_name',
+    new.raw_user_meta_data ->> 'global_name',
+    new.raw_user_meta_data ->> 'full_name',
+    new.raw_user_meta_data ->> 'name',
+    new.raw_user_meta_data ->> 'username',
+    ''
+  ));
 
-  if requested_username !~ '^[a-z0-9_]{3,24}$' then
+  if requested_username !~ '^[a-z0-9_]{3,24}
+
+  return new;
+end;
+$$;
+
+revoke all on function private.handle_new_sweetcord_user() from public, anon, authenticated;
+
+drop trigger if exists on_sweetcord_auth_user_created on auth.users;
+create trigger on_sweetcord_auth_user_created
+  after insert on auth.users
+  for each row execute function private.handle_new_sweetcord_user();
+
+create or replace function private.handle_accepted_friend_request()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  if old.status = 'pending' and new.status = 'accepted' then
+    insert into public.friendships (user_low_id, user_high_id)
+    values (least(new.sender_id, new.recipient_id), greatest(new.sender_id, new.recipient_id))
+    on conflict do nothing;
+  end if;
+  return new;
+end;
+$$;
+
+revoke all on function private.handle_accepted_friend_request() from public, anon, authenticated;
+
+drop trigger if exists on_sweetcord_friend_request_accepted on public.friend_requests;
+create trigger on_sweetcord_friend_request_accepted
+  after update of status on public.friend_requests
+  for each row
+  when (old.status is distinct from new.status)
+  execute function private.handle_accepted_friend_request();
+
+create or replace function public.find_profile_by_username(p_username text)
+returns table (id uuid, username text, display_name text, avatar_url text)
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  normalized_username text;
+begin
+  if (select auth.uid()) is null then
+    raise exception 'Authentication required' using errcode = '28000';
+  end if;
+
+  normalized_username := lower(regexp_replace(trim(coalesce(p_username, '')), '^@', ''));
+  if normalized_username !~ '^[a-z0-9_]{3,24}$' then
+    return;
+  end if;
+
+  return query
+    select p.id, p.username, p.display_name, p.avatar_url
+    from public.profiles p
+    where p.username = normalized_username
+      and p.id <> (select auth.uid())
+    limit 1;
+end;
+$$;
+
+revoke all on function public.find_profile_by_username(text) from public, anon;
+grant execute on function public.find_profile_by_username(text) to authenticated;
+
+-- Keep updates ordered and auditable without exposing unnecessary account fields.
+create or replace function private.touch_updated_at()
+returns trigger
+language plpgsql
+set search_path = ''
+as $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$;
+
+revoke all on function private.touch_updated_at() from public, anon, authenticated;
+
+drop trigger if exists profiles_touch_updated_at on public.profiles;
+create trigger profiles_touch_updated_at before update on public.profiles
+for each row execute function private.touch_updated_at();
+
+drop trigger if exists friend_requests_touch_updated_at on public.friend_requests;
+create trigger friend_requests_touch_updated_at before update on public.friend_requests
+for each row execute function private.touch_updated_at();
+
+     or exists (
+       select 1 from public.profiles existing
+       where existing.username = requested_username and existing.id <> new.id
+     ) then
     chosen_username := 'user_' || substring(replace(new.id::text, '-', '') from 1 for 12);
   else
     chosen_username := requested_username;
