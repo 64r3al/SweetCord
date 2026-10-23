@@ -66,15 +66,9 @@ export async function startDiscordOAuth(): Promise<void> {
 export async function completeDiscordOAuth(): Promise<DiscordProfile | null> {
   const params = new URLSearchParams(window.location.search);
   const providerError = params.get("error");
-  if (providerError) {
-    throw new Error(providerError === "access_denied"
-      ? "Discord sign-in was cancelled."
-      : `Discord sign-in failed: ${providerError}`);
-  }
-
   const code = params.get("code");
   const returnedState = params.get("state");
-  if (!code) return null;
+  if (!code && !providerError) return null;
 
   const expectedState = sessionStorage.getItem(STATE_KEY);
   sessionStorage.removeItem(STATE_KEY);
@@ -82,6 +76,12 @@ export async function completeDiscordOAuth(): Promise<DiscordProfile | null> {
   if (!returnedState || !expectedState || returnedState !== expectedState) {
     throw new Error("Sign-in validation failed (state mismatch). Please try again.");
   }
+  if (providerError) {
+    throw new Error(providerError === "access_denied"
+      ? "Discord sign-in was cancelled."
+      : `Discord sign-in failed: ${providerError}`);
+  }
+  if (!code) return null;
 
   const exchangeEndpoint = import.meta.env.VITE_DISCORD_EXCHANGE_ENDPOINT?.trim();
   const redirectUri = import.meta.env.VITE_DISCORD_REDIRECT_URI?.trim();
@@ -92,7 +92,6 @@ export async function completeDiscordOAuth(): Promise<DiscordProfile | null> {
   const response = await fetch(exchangeEndpoint, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    credentials: "include",
     body: JSON.stringify({ code, redirectUri })
   });
 
