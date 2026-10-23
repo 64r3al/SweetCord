@@ -8,3 +8,6 @@ dist/
 *.log
 src-tauri/target/
 target/
+supabase/functions/.env
+supabase/.temp/
+.env.local
