@@ -21,3 +21,17 @@ jobs:
         run: npm run typecheck
       - name: Build frontend
         run: npm run build
+
+  edge-function:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Deno
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - name: Type-check Edge Function and tests
+        run: deno check supabase/functions/discord-oauth-exchange/index.ts supabase/functions/discord-oauth-exchange/handler_test.ts
+      - name: Test Edge Function security and profile exchange
+        run: deno test supabase/functions/discord-oauth-exchange/handler_test.ts
