@@ -2,6 +2,11 @@
 -- Apply only to a dedicated SweetCord Supabase project after identity-friends.sql.
 -- Before production, copy this reviewed source into a CLI-generated migration.
 
+grant usage on schema private to authenticated;
+
+revoke all on public.workspaces, public.workspace_members, public.workspace_channels,
+  public.dm_conversations, public.dm_participants, public.messages from anon, authenticated;
+
 create table if not exists public.workspaces (
   id uuid primary key default gen_random_uuid(),
   name text not null check (char_length(trim(name)) between 2 and 48),
@@ -249,7 +254,9 @@ create policy "messages_delete_own"
 
 grant select on public.workspaces, public.workspace_members, public.workspace_channels,
   public.dm_conversations, public.dm_participants to authenticated;
-grant select, insert, update, delete on public.messages to authenticated;
+grant select, insert, delete on public.messages to authenticated;
+revoke update on public.messages from authenticated;
+grant update (content) on public.messages to authenticated;
 
 -- Create a server/group and its first text channel atomically.
 create or replace function public.create_workspace(p_name text, p_kind text)
@@ -269,7 +276,7 @@ begin
   if char_length(trim(coalesce(p_name, ''))) < 2 or char_length(trim(p_name)) > 48 then
     raise exception 'Workspace name must be between 2 and 48 characters';
   end if;
-  if p_kind not in ('server', 'group') then
+  if p_kind is null or p_kind not in ('server', 'group') then
     raise exception 'Unsupported workspace type';
   end if;
 
@@ -401,7 +408,7 @@ begin
   if current_user_id is null then
     raise exception 'Authentication required' using errcode = '28000';
   end if;
-  if p_kind not in ('direct', 'group') then
+  if p_kind is null or p_kind not in ('direct', 'group') then
     raise exception 'Unsupported conversation type';
   end if;
 
