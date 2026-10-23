@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   ArrowRight,
   AudioLines,
@@ -148,10 +148,13 @@ export default function App() {
   const [demo, setDemo] = useState(false);
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState<Notice>(null);
+  const callbackHandled = useRef(false);
 
   useEffect(() => {
+    if (callbackHandled.current) return;
     const params = new URLSearchParams(window.location.search);
     if (!params.has("code") && !params.has("error")) return;
+    callbackHandled.current = true;
 
     setBusy(true);
     completeDiscordOAuth()
