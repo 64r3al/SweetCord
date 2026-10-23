@@ -4,9 +4,6 @@
 
 grant usage on schema private to authenticated;
 
-revoke all on public.workspaces, public.workspace_members, public.workspace_channels,
-  public.dm_conversations, public.dm_participants, public.messages from anon, authenticated;
-
 create table if not exists public.workspaces (
   id uuid primary key default gen_random_uuid(),
   name text not null check (char_length(trim(name)) between 2 and 48),
@@ -86,6 +83,10 @@ alter table public.workspace_channels enable row level security;
 alter table public.dm_conversations enable row level security;
 alter table public.dm_participants enable row level security;
 alter table public.messages enable row level security;
+
+revoke all on public.workspaces, public.workspace_members, public.workspace_channels,
+  public.dm_conversations, public.dm_participants, public.messages from anon, authenticated;
+
 
 -- Narrow security-definer helpers prevent recursive RLS policies and never accept
 -- a caller-supplied user ID: every check is against the authenticated session.
