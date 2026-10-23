@@ -1,0 +1,6 @@
+project_id = "sweetcord"
+
+# This pre-login callback is public at the gateway by design.
+# The function must validate origin/redirect URI and keep Discord secrets server-side.
+[functions.discord-oauth-exchange]
+verify_jwt = false
