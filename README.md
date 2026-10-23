@@ -111,15 +111,33 @@ VITE_SUPABASE_PUBLISHABLE_KEY=YOUR_SUPABASE_PUBLISHABLE_KEY
 
 Never put a Supabase service-role key, Discord client secret, or other server secret in a `VITE_*` variable. Do not commit `.env.local`.
 
-### Optional standalone Discord profile-preview fallback
+### Temporary local Discord sign-in test
 
-The separate profile-preview flow is retained for UI testing when Supabase Auth is not configured. It verifies basic Discord identity through a server-side OAuth exchange, but **does not create a logged-in SweetCord session**. It requires a deployed `discord-oauth-exchange` Edge Function and these frontend values:
+For a temporary **profile-only** test, the local Vite development server includes a test-only OAuth code exchange route. It exists only while `npm run dev` is running; it is not included in production builds. It asks Discord to verify the signed-in profile using the official OAuth authorization-code flow, returns only basic profile fields, then attempts to revoke the short-lived access token. It does not read DMs, join servers, or create a logged-in SweetCord chat session.
 
-- `VITE_DISCORD_CLIENT_ID`
-- `VITE_DISCORD_REDIRECT_URI`
-- `VITE_DISCORD_EXCHANGE_ENDPOINT`
+1. Create or open your app in the [Discord Developer Portal](https://discord.com/developers/applications).
+2. Under OAuth2 redirects, add exactly `http://127.0.0.1:5173/` and save changes.
+3. In the repository root, copy `.env.example` to `.env.local`.
+4. Set these values in `.env.local`:
 
-The Edge Function needs `DISCORD_CLIENT_ID`, `DISCORD_CLIENT_SECRET`, `SWEETCORD_ALLOWED_ORIGIN`, and `SWEETCORD_ALLOWED_REDIRECT_URI` server secrets. Do not configure this fallback in place of Supabase Auth for the real app.
+   ```dotenv
+   VITE_DISCORD_CLIENT_ID=your_discord_application_id
+   VITE_DISCORD_REDIRECT_URI=http://127.0.0.1:5173/
+   VITE_DISCORD_EXCHANGE_ENDPOINT=
+   DISCORD_CLIENT_SECRET=your_discord_client_secret
+   ```
+
+   Keep `DISCORD_CLIENT_SECRET` exactly as written, without the `VITE_` prefix. The local server reads it; the browser does not.
+5. Save the file, restart `Launch SweetCord.bat`, and click **Continue with Discord**.
+
+The temporary test does not need a Supabase project. The client ID and secret come from your own Discord application; never paste the secret or any account token into chat or commit it to GitHub. If Discord reports a redirect mismatch, check that both the Developer Portal and `.env.local` use the exact redirect above.
+
+When the test is complete, the local-only test route can be removed. For actual SweetCord sessions and chats, configure Discord as an OAuth provider in a dedicated SweetCord Supabase project instead. For that flow, the Supabase callback URL is `https://YOUR_PROJECT_REF.supabase.co/auth/v1/callback`, which is different from the local redirect above. See [Supabase's Discord sign-in guide](https://supabase.com/docs/guides/auth/social-login/auth-discord).
+
+### Optional deployed Discord profile-preview fallback
+
+The existing standalone profile-preview flow can also call a deployed `discord-oauth-exchange` Edge Function instead of the local test route. Set `VITE_DISCORD_EXCHANGE_ENDPOINT` to the function's HTTPS URL and set `VITE_SUPABASE_PUBLISHABLE_KEY`. Its server-side secrets are `DISCORD_CLIENT_ID`, `DISCORD_CLIENT_SECRET`, `SWEETCORD_ALLOWED_ORIGIN`, and `SWEETCORD_ALLOWED_REDIRECT_URI`. Never put the client secret in a `VITE_*` variable.
+
 
 ## Security notes
 
