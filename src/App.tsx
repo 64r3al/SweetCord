@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 import NativeAuth from "./NativeAuth";
-import FriendHub from "./FriendHub";
+import ChatHub from "./ChatHub";
 import { supabase } from "./lib/supabase";
 import {
   ArrowRight,
@@ -266,7 +266,7 @@ export default function App() {
   }
 
   if (nativeSession) {
-    return <FriendHub session={nativeSession} onSignOut={() => setNativeSession(null)} />;
+    return <ChatHub session={nativeSession} onSignOut={() => setNativeSession(null)} />;
   }
 
   if (profile && confirmed) {
