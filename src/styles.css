@@ -578,3 +578,5 @@ button:focus-visible, a:focus-visible { outline: 2px solid #c5b8ff; outline-offs
 @media (prefers-reduced-motion: reduce) {
   .sc-app-shell *, .sc-app-shell *::before, .sc-app-shell *::after { transition-duration: .01ms !important; animation-duration: .01ms !important; }
 }
+
+.sc-modal-error { margin: 0 0 14px; padding: 10px 11px; border: 1px solid rgba(234,105,124,.22); border-radius: 9px; background: rgba(162,54,74,.075); color: #e5a9b1; font-size: 10px; line-height: 1.65; overflow-wrap: anywhere; }
