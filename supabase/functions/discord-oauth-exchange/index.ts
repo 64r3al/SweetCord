@@ -1,6 +1,6 @@
 const jsonHeaders = (allowedOrigin: string) => ({
   "Access-Control-Allow-Origin": allowedOrigin,
-  "Access-Control-Allow-Headers": "content-type",
+  "Access-Control-Allow-Headers": "content-type, apikey",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
   "Content-Type": "application/json; charset=utf-8",
   "Cache-Control": "no-store",
