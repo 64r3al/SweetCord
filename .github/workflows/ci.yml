@@ -35,3 +35,15 @@ jobs:
         run: deno check supabase/functions/discord-oauth-exchange/index.ts supabase/functions/discord-oauth-exchange/handler_test.ts
       - name: Test Edge Function security and profile exchange
         run: deno test supabase/functions/discord-oauth-exchange/handler_test.ts
+
+  python-desktop:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Compile Python desktop preview
+        run: python -m py_compile desktop-python/sweetcord.py
