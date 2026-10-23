@@ -3,7 +3,7 @@ import type { Session } from "@supabase/supabase-js";
 import {
   Activity, ArrowLeft, ArrowRight, AtSign, Check, ChevronDown, CircleHelp,
   Compass, Hash, Headphones, LogOut, MessageCircle, MoreHorizontal, Plus,
-  RefreshCw, Search, Send, Settings2, ShieldCheck, Sparkles, UserPlus,
+  RefreshCw, Send, Settings2, ShieldCheck, Sparkles, UserPlus,
   Users, X, Zap
 } from "lucide-react";
 import { supabase } from "./lib/supabase";
@@ -94,7 +94,6 @@ export default function ChatHub({ session, onSignOut }: Props) {
   const activeChannels = channels.filter((channel) => channel.workspace_id === activeWorkspaceId).sort((a, b) => a.position - b.position);
   const activeMembers = workspaceMembers.filter((member) => member.workspace_id === activeWorkspaceId);
   const canManageWorkspace = Boolean(activeWorkspace && activeMembers.some((member) => member.user_id === userId && (member.role === "owner" || member.role === "admin")));
-  const onlineCount = 1;
   const userEmail = session.user.email ?? "SweetCord account";
   const activeConversationUsers = activeConversation
     ? participants.filter((participant) => participant.conversation_id === activeConversation.id && participant.user_id !== userId).map((participant) => profileById.get(participant.user_id)).filter((profile): profile is Profile => Boolean(profile))
@@ -177,6 +176,7 @@ export default function ChatHub({ session, onSignOut }: Props) {
       setOutgoingRequests(outgoingRows.map((row) => ({ ...row, profile: byId.get(row.recipient_id) })));
 
       if (preferredWorkspaceId) {
+        didInitialSelection.current = true;
         const preferredChannels = channelRows.filter((channel) => channel.workspace_id === preferredWorkspaceId).sort((a, b) => a.position - b.position);
         setActiveWorkspaceId(preferredWorkspaceId);
         setActiveChannelId(preferredChannels[0]?.id ?? null);
@@ -209,12 +209,12 @@ export default function ChatHub({ session, onSignOut }: Props) {
     }
     setMessagesLoading(true);
     try {
-      let query = supabase.from("messages").select("id,channel_id,conversation_id,sender_id,content,created_at,edited_at").order("created_at", { ascending: true }).limit(100);
+      let query = supabase.from("messages").select("id,channel_id,conversation_id,sender_id,content,created_at,edited_at").order("created_at", { ascending: false }).limit(100);
       if (activeConversationId) query = query.eq("conversation_id", activeConversationId);
       else if (activeChannelId) query = query.eq("channel_id", activeChannelId);
       const { data, error: queryError } = await query;
       if (queryError) throw queryError;
-      const rows = (data ?? []) as Message[];
+      const rows = [...((data ?? []) as Message[])].reverse();
       const senderIds = [...new Set(rows.map((row) => row.sender_id))];
       const senderResult = senderIds.length
         ? await supabase.from("profiles").select("id,username,display_name,avatar_url").in("id", senderIds)
