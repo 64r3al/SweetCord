@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from "react";
-import { ArrowLeft, ArrowRight, AtSign, KeyRound, UserRoundPlus } from "lucide-react";
+import { ArrowLeft, ArrowRight, AtSign, KeyRound } from "lucide-react";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "./lib/supabase";
 
