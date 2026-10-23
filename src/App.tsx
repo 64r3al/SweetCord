@@ -1,6 +1,11 @@
 import { useEffect, useRef, useState } from "react";
+import type { Session } from "@supabase/supabase-js";
+import NativeAuth from "./NativeAuth";
+import FriendHub from "./FriendHub";
+import { supabase } from "./lib/supabase";
 import {
   ArrowRight,
+  AtSign,
   AudioLines,
   Check,
   ChevronRight,
@@ -148,7 +153,34 @@ export default function App() {
   const [demo, setDemo] = useState(false);
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState<Notice>(null);
+  const [nativeAuthOpen, setNativeAuthOpen] = useState(false);
+  const [nativeSession, setNativeSession] = useState<Session | null>(null);
+  const [nativeAuthLoading, setNativeAuthLoading] = useState(Boolean(supabase));
   const callbackHandled = useRef(false);
+
+  useEffect(() => {
+    if (!supabase) {
+      setNativeAuthLoading(false);
+      return;
+    }
+
+    let active = true;
+    void supabase.auth.getSession().then(({ data, error }) => {
+      if (!active) return;
+      if (error) setNotice({ kind: "error", message: "Couldn't restore your SweetCord session. Sign in again if needed." });
+      setNativeSession(data.session);
+      setNativeAuthLoading(false);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (active) setNativeSession(session);
+    });
+
+    return () => {
+      active = false;
+      subscription.unsubscribe();
+    };
+  }, []);
 
   useEffect(() => {
     if (callbackHandled.current) return;
@@ -202,6 +234,18 @@ export default function App() {
     setNotice({ kind: "info", message: "Demo mode: using a local sample profile only." });
   };
 
+  if (nativeAuthLoading) {
+    return (
+      <main className="page-shell auth-loading-shell">
+        <div className="auth-loading"><div className="brand-mark"><Headphones size={22} /></div><span>Restoring your SweetCord session…</span></div>
+      </main>
+    );
+  }
+
+  if (nativeSession) {
+    return <FriendHub session={nativeSession} onSignOut={() => setNativeSession(null)} />;
+  }
+
   if (profile && confirmed) {
     return <HomePreview profile={profile} demo={demo} onSignOut={clearSession} />;
   }
@@ -251,6 +295,14 @@ export default function App() {
               onContinue={() => setConfirmed(true)}
               onSignOut={clearSession}
             />
+          ) : nativeAuthOpen ? (
+            <NativeAuth
+              onBack={() => setNativeAuthOpen(false)}
+              onAuthenticated={(session) => {
+                setNativeSession(session);
+                setNativeAuthOpen(false);
+              }}
+            />
           ) : (
             <div className="login-card">
               <div className="card-brand"><BrandMark /></div>
@@ -273,8 +325,15 @@ export default function App() {
                 {!busy && <ArrowRight size={17} />}
               </button>
 
-              <div className="or-divider"><span /> <small>OR TRY THE INTERFACE</small> <span /></div>
+              <div className="or-divider"><span /> <small>ANOTHER WAY TO SIGN IN</small> <span /></div>
 
+              <button className="account-button" onClick={() => { setNativeAuthOpen(true); setNotice(null); }} disabled={busy}>
+                <AtSign size={17} />
+                Continue with email
+                <ChevronRight size={16} />
+              </button>
+
+              <div className="demo-separator"><span /> LOCAL PREVIEW ONLY <span /></div>
               <button className="demo-button" onClick={handleDemo} disabled={busy}>
                 <Sparkles size={17} />
                 Explore with a demo profile
