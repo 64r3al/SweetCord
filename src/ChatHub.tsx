@@ -74,7 +74,7 @@ export default function ChatHub({ session, onSignOut }: Props) {
   const [modalName, setModalName] = useState("");
   const [modalKind, setModalKind] = useState<"server" | "group">("server");
   const [usernames, setUsernames] = useState("");
-  const [channelKind, setChannelKind] = useState<"text">("text");
+  const channelKind: "text" = "text";
   const [inviteUsername, setInviteUsername] = useState("");
   const [friendUsername, setFriendUsername] = useState("");
   const [loading, setLoading] = useState(true);
@@ -255,11 +255,23 @@ export default function ChatHub({ session, onSignOut }: Props) {
     setWorking(true);
     setError("");
     try {
-      const payload = activeConversationId
-        ? { conversation_id: activeConversationId, channel_id: null, sender_id: userId, content }
-        : { channel_id: activeChannelId, conversation_id: null, sender_id: userId, content };
-      const { error: insertError } = await supabase.from("messages").insert(payload);
-      if (insertError) throw insertError;
+      if (activeConversationId) {
+        const { error: insertError } = await supabase.from("messages").insert({
+          conversation_id: activeConversationId,
+          channel_id: null,
+          sender_id: userId,
+          content
+        });
+        if (insertError) throw insertError;
+      } else if (activeChannelId) {
+        const { error: insertError } = await supabase.from("messages").insert({
+          channel_id: activeChannelId,
+          conversation_id: null,
+          sender_id: userId,
+          content
+        });
+        if (insertError) throw insertError;
+      }
       setComposer("");
       await loadMessages();
     } catch (caught: unknown) {
