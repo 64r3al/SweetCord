@@ -117,7 +117,7 @@ function HomePreview({ profile, demo, onSignOut }: { profile: DiscordProfile; de
         <div className="sidebar-spacer" />
         <div className="mini-profile">
           <Avatar profile={profile} demo={demo} />
-          <div><strong>{profile.global_name || profile.username}</strong><small>{demo ? "Demo mode" : "Signed in"}</small></div>
+          <div><strong>{profile.global_name || profile.username}</strong><small>{demo ? "Demo mode" : "Discord verified"}</small></div>
           <button className="icon-button" onClick={onSignOut} title="Sign out" aria-label="Sign out"><ChevronRight size={17} /></button>
         </div>
       </aside>
