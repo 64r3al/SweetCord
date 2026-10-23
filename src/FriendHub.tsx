@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
 import { ArrowRight, Check, CircleUserRound, LogOut, MessageCircle, RefreshCw, Search, ShieldCheck, UserPlus, Users, X } from "lucide-react";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "./lib/supabase";
@@ -90,7 +90,7 @@ export default function FriendHub({ session, onSignOut }: Props) {
 
   useEffect(() => { void loadData(); }, [loadData]);
 
-  const handleAddFriend = async (event: React.FormEvent<HTMLFormElement>) => {
+  const handleAddFriend = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!supabase) return;
     const normalized = query.trim().replace(/^@/, "").toLowerCase();
