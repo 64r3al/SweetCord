@@ -363,7 +363,7 @@ export default function App() {
                 <ChevronRight size={16} />
               </button>
 
-              <div className="secure-note"><ShieldCheck size={15} /><span>Discord sign-in is optional in this UI preview. Demo mode uses no account data.</span></div>
+              <div className="secure-note"><ShieldCheck size={15} /><span>Continue on Discord's official sign-in page, then return to SweetCord. Your Discord password never goes through this app.</span></div>
             </div>
           )}
           <div className="auth-footnote">Free core features <span>·</span> No Nitro required <span>·</span> Made for your squad</div>
