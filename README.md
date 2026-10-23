@@ -128,3 +128,13 @@ npm run build
 3. Add file sharing, server invites/discovery, block/report tools, and moderation.
 4. Build and profile the Tauri desktop client on lower-end Windows PCs.
 5. Measure RAM and CPU usage with real sessions; lightweight performance is a goal, not a benchmark claim yet.
+
+## Python desktop prototype
+
+A separate standard-library Tkinter sandbox is available for quick UI testing without setting up a backend:
+
+- Launch on Windows: double-click [`desktop-python/run.bat`](desktop-python/run.bat)
+- Instructions and limitations: [`desktop-python/README.md`](desktop-python/README.md)
+- Source: [`desktop-python/sweetcord.py`](desktop-python/sweetcord.py)
+
+This prototype runs in local demo mode only. It is useful for evaluating the compact desktop UI and message interactions; it does not access real Discord accounts or send data to Discord. Real Discord DMs and voice features depend on approved integration permissions, not a pasted user token.
