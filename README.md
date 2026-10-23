@@ -73,3 +73,27 @@ The current environment could not run npm install/build, so those checks still n
 4. Direct messages
 5. Low-overhead voice rooms and device controls
 6. Tauri desktop integration, crash handling, and real low-end PC profiling
+
+## Native SweetCord accounts and friends (Step 3)
+
+This milestone adds SweetCord-native email/password sign-up and sign-in, restores persisted Supabase Auth sessions, creates a profile row through a database trigger, and supports exact-username friend requests with accept/decline and a canonical friendship record.
+
+### Apply the identity/friends schema
+
+1. Create and select a **dedicated SweetCord** Supabase project. Do not use the Exam website project.
+2. Generate a migration through the Supabase CLI with `supabase migration new identity_friends`.
+3. Copy the reviewed SQL from `supabase/schema/identity-friends.sql` into that generated migration.
+4. Link the CLI to the SweetCord project and apply the migration. Inspect RLS policies and run the project security advisors before testing.
+5. In Supabase Authentication settings, decide whether email confirmation is required. If enabled, the app will prompt the user to check their email before signing in.
+6. Copy the project's URL and public publishable key to `.env.local` as `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY`. Never put a secret/service-role key into a `VITE_*` variable.
+7. Run `npm install` then `npm run dev` and test with two separate SweetCord accounts.
+
+### Friend-system behavior
+
+- Usernames are lowercase and unique; discovery is an exact-username lookup returning only basic profile fields.
+- Friend requests are private to their sender and recipient. Only the recipient can accept or decline.
+- Accepting a request creates the friendship atomically through a database trigger.
+- Profile reads are limited to your own profile, friends, and pending-request peers. Email addresses are never returned by the friend lookup.
+- The schema is included as reviewed source, not yet applied to a live database. Once connected to the dedicated project, use a CLI-generated migration so migration history stays consistent.
+
+This is a first production-minded foundation; add rate limiting, abuse reporting, blocking, recovery flows and desktop credential-store hardening before a public release.
