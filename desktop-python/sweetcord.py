@@ -105,23 +105,25 @@ class SweetCordDemo:
         center.pack(fill="both", expand=True)
         card = tk.Frame(center, bg=PANEL, highlightbackground=LINE, highlightthickness=1)
         card.place(relx=0.5, rely=0.47, anchor="center", width=480)
+        card_content = tk.Frame(card, bg=PANEL)
+        card_content.pack(fill="both", expand=True, padx=32, pady=30)
 
-        tk.Label(card, text="◈", bg="#29243a", fg=PURPLE,
+        tk.Label(card_content, text="◈", bg="#29243a", fg=PURPLE,
                  font=("Segoe UI Symbol", 24), width=3, height=1).pack(pady=(0, 18))
-        self.label(card, "A LITTLE LESS NOISE", size=9, color=PURPLE, bold=True).pack()
-        self.label(card, "Stay in the game.\nNot in the way.", size=27, bold=True,
+        self.label(card_content, "A LITTLE LESS NOISE", size=9, color=PURPLE, bold=True).pack()
+        self.label(card_content, "Stay in the game.\nNot in the way.", size=27, bold=True,
                    justify="center", anchor="center").pack(pady=(12, 8))
-        self.label(card, "A lightweight chat layout for players who want to keep\n"
+        self.label(card_content, "A lightweight chat layout for players who want to keep\n"
                          "their focus—and system resources—on the game.",
                    size=10, color=MUTED, justify="center", anchor="center").pack(pady=(0, 22))
 
-        self.button(card, "Launch local demo", self.open_demo, bg=PURPLE_DARK,
+        self.button(card_content, "Launch local demo", self.open_demo, bg=PURPLE_DARK,
                     active_bg="#7866ca", padx=20, pady=12, font_size=11).pack(fill="x")
-        self.button(card, "What is demo mode?", self.explain_demo, bg=PANEL_3,
+        self.button(card_content, "What is demo mode?", self.explain_demo, bg=PANEL_3,
                     fg="#d1cce0", padx=20, pady=10).pack(fill="x", pady=(9, 0))
         warning = ("This sandbox does not sign in to Discord or contact its API.\n"
                    "Never paste a Discord user token into a third-party app.")
-        self.label(card, warning, size=9, color=SOFT, justify="center",
+        self.label(card_content, warning, size=9, color=SOFT, justify="center",
                    anchor="center", wraplength=400).pack(pady=(22, 0))
         footer = tk.Frame(outer, bg=BG)
         footer.pack(fill="x", side="bottom", padx=28, pady=12)
