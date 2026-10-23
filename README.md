@@ -29,7 +29,8 @@ Demo mode uses a fixed local sample profile only. It does not read the Discord a
 3. Add the exact value of `VITE_DISCORD_REDIRECT_URI` to the application's OAuth2 redirect list. For local development, this is `http://127.0.0.1:5173/`.
 4. Deploy the `discord-oauth-exchange` Supabase Edge Function below.
 5. Set `VITE_DISCORD_EXCHANGE_ENDPOINT` to `https://YOUR_PROJECT_REF.supabase.co/functions/v1/discord-oauth-exchange`.
-6. Restart the Vite dev server and click **Continue with Discord**.
+6. Set `VITE_SUPABASE_PUBLISHABLE_KEY` to the project's public publishable key. It is sent only in the `apikey` header; never use a secret/service-role key in the frontend.
+7. Restart the Vite dev server and click **Continue with Discord**.
 
 The app requests only the `identify` scope. It confirms basic profile identity; it does not provide access to all existing Discord servers, DMs, or voice channels.
 
@@ -41,6 +42,8 @@ Configure these as Supabase Function secrets (never in `.env.local` or frontend 
 - `DISCORD_CLIENT_SECRET` — from the Discord Developer Portal
 - `SWEETCORD_ALLOWED_ORIGIN` — exact frontend origin, e.g. `http://127.0.0.1:5173`
 - `SWEETCORD_ALLOWED_REDIRECT_URI` — exact redirect URI, e.g. `http://127.0.0.1:5173/`
+
+The browser calls the public Edge Function with the Supabase publishable key in the `apikey` header. The function explicitly checks the expected origin and redirect URI; the public key is not an authorization secret.
 
 Local function development can use `supabase/functions/.env`, excluded from source control. For a hosted project, add secrets through the Supabase dashboard or CLI.
 
