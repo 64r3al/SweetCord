@@ -37,6 +37,7 @@ test("disabling static avatars generates a reversible configuration", () => {
   assert.match(source, /"staticAnimatedAvatars":false/);
   assert.match(source, /data-sweetcord-original-src/);
   assert.match(source, /data-sweetcord-static-src/);
+  assert.match(source, /data-sweetcord-static-failed-src/);
 });
 
 test("missing preferences safely default to disabled values", () => {
