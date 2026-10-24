@@ -249,6 +249,7 @@ function makeMenu() {
         {
           type: "checkbox",
           label: "Lean interface (hide promos, reduce effects)",
+          accelerator: "CmdOrCtrl+Shift+M",
           checked: leanModeEnabled,
           click: (item) => setLeanMode(item.checked)
         },
