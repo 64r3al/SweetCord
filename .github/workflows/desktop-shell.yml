@@ -14,7 +14,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   windows-package:
@@ -46,3 +46,33 @@ jobs:
           path: desktop-electron/release/*.exe
           if-no-files-found: error
           retention-days: 14
+
+      - name: Move nightly tag to this build
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        shell: bash
+        run: |
+          git tag -f nightly "$GITHUB_SHA"
+          git push origin refs/tags/nightly --force
+
+      - name: Publish the downloadable Windows preview
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: nightly
+          name: SweetCord Desktop — Latest Preview
+          target_commitish: ${{ github.sha }}
+          body: |
+            **Preview build for testing — not a stable release.**
+
+            Download the Windows installer below, run it, and sign in on Discord's official page.
+
+            This app wraps Discord's own web app in a SweetCord-branded Electron window. The optional promotional/navigation hiding is best-effort and may need updates as Discord changes its interface. CPU, RAM, and GPU savings have not yet been independently benchmarked across PCs.
+
+            SweetCord is an unofficial third-party client and is not affiliated with Discord. Third-party client modifications may carry account and Terms of Service risks.
+          prerelease: true
+          make_latest: false
+          files: desktop-electron/release/*.exe
+          fail_on_unmatched_files: true
+          overwrite_files: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
