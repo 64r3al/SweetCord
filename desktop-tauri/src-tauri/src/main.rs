@@ -98,7 +98,6 @@ fn main() {
             let popup_handle = app.handle().clone();
 
             WebviewWindowBuilder::from_config(app.handle(), &config)?
-                .background_throttling(true)
                 .devtools(cfg!(debug_assertions))
                 .initialization_script(LEAN_SCRIPT)
                 .on_navigation(move |url| {
