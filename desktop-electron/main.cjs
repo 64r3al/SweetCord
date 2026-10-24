@@ -149,10 +149,9 @@ function applyLeanMode(window) {
 }
 
 function installLeanModeHooks(window) {
-  const apply = () => applyLeanMode(window);
-  window.webContents.on("dom-ready", apply);
-  window.webContents.on("did-finish-load", apply);
-  window.webContents.on("did-navigate-in-page", apply);
+  // Apply once per loaded document. Discord SPA route changes keep the document alive,
+  // and the MutationObserver handles new UI; preference changes call applyLeanMode directly.
+  window.webContents.on("dom-ready", () => applyLeanMode(window));
 }
 
 function setPreference(name, enabled) {
