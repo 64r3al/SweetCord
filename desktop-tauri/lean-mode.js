@@ -61,6 +61,9 @@
     const src = image.getAttribute("src") || "";
     const original = image.getAttribute("data-sweetcord-tauri-original-src");
     const stillSrc = image.getAttribute("data-sweetcord-tauri-static-src");
+    const failedSrc = image.getAttribute("data-sweetcord-tauri-failed-src");
+    if (failedSrc && failedSrc !== src) image.removeAttribute("data-sweetcord-tauri-failed-src");
+    else if (failedSrc === src) return;
     const pathOnly = src.split(/[?#]/, 1)[0].toLowerCase();
     const lastSegment = pathOnly.slice(pathOnly.lastIndexOf("/") + 1);
     const animated = pathOnly.includes("/avatars/") && lastSegment.startsWith("a_") && lastSegment.endsWith(".gif");
@@ -80,7 +83,7 @@
           if (image.getAttribute("src") !== target) return;
           const originalSrc = image.getAttribute("data-sweetcord-tauri-original-src");
           const originalSet = image.getAttribute("data-sweetcord-tauri-original-srcset") || "";
-          if (originalSrc) image.setAttribute("src", originalSrc);
+          if (originalSrc) { image.setAttribute("data-sweetcord-tauri-failed-src", originalSrc); image.setAttribute("src", originalSrc); }
           if (originalSet) image.setAttribute("srcset", originalSet); else image.removeAttribute("srcset");
           clearSaved(image);
         }, { once: true });
