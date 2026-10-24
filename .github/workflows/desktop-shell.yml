@@ -1,0 +1,48 @@
+name: SweetCord desktop shell
+
+on:
+  push:
+    paths:
+      - "desktop-electron/**"
+      - "Launch SweetCord Desktop.bat"
+      - ".github/workflows/desktop-shell.yml"
+  pull_request:
+    paths:
+      - "desktop-electron/**"
+      - "Launch SweetCord Desktop.bat"
+      - ".github/workflows/desktop-shell.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows-package:
+    runs-on: windows-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: desktop-electron/package.json
+
+      - name: Check JavaScript syntax
+        run: node --check desktop-electron/main.cjs
+
+      - name: Install desktop dependencies
+        run: npm install --prefix desktop-electron
+
+      - name: Build Windows installer
+        run: npm run package:win --prefix desktop-electron
+
+      - name: Upload Windows installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: SweetCord-Windows-Installer
+          path: desktop-electron/release/*.exe
+          if-no-files-found: error
+          retention-days: 14
