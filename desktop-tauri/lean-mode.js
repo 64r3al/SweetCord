@@ -101,14 +101,32 @@
   };
 
   if (!window.__sweetCordTauriObserver) {
-    processTree(document.documentElement);
+    const appRoot = document.getElementById("app-mount") || root;
+    processTree(appRoot);
     const pendingNodes = new Set();
     const pendingImages = new Set();
     let queued = false;
     const flush = () => {
       queued = false;
-      pendingImages.forEach(normalize);
-      pendingNodes.forEach(processTree);
+      const queuedNodes = Array.from(pendingNodes);
+      const isCoveredByQueuedNode = (image) => {
+        let current = image;
+        while (current) {
+          if (pendingNodes.has(current)) return true;
+          current = current.parentElement;
+        }
+        return false;
+      };
+      pendingImages.forEach((image) => { if (!isCoveredByQueuedNode(image)) normalize(image); });
+      queuedNodes.forEach((node) => {
+        let parent = node.parentElement;
+        let coveredByQueuedAncestor = false;
+        while (parent) {
+          if (pendingNodes.has(parent)) { coveredByQueuedAncestor = true; break; }
+          parent = parent.parentElement;
+        }
+        if (!coveredByQueuedAncestor) processTree(node);
+      });
       pendingImages.clear();
       pendingNodes.clear();
     };
@@ -128,7 +146,7 @@
       }
       if (pendingImages.size || pendingNodes.size) queue();
     });
-    observer.observe(document.documentElement, { childList: true, subtree: true, attributes: true, attributeFilter: ["src"] });
+    observer.observe(document.getElementById("app-mount") || root, { childList: true, subtree: true, attributes: true, attributeFilter: ["src"] });
     window.__sweetCordTauriObserver = observer;
   }
   };
