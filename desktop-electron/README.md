@@ -50,3 +50,11 @@ The installer is written to `desktop-electron/release/`.
 - SweetCord does not ask for, log, export, or store a pasted Discord user token.
 - Discord's own sign-in website handles credentials and session tokens in the Electron browser profile.
 - External links are restricted to HTTP(S)/mailto before opening in the system browser.
+
+## Lean interface mode
+
+The desktop shell now enables **Lean interface mode** by default. Open **Performance** in the app menu to toggle it. The setting is saved locally in SweetCord's own preferences file.
+
+It hides common navigation entries for optional destinations such as Store, Shop, Quests, Nitro and Discovery, removes a few promotion containers when their class names are recognizable, shortens transition timings, and removes backdrop blur effects. These selectors are best-effort and can stop matching when Discord changes its web UI; reload Discord after a UI update if needed.
+
+The mode deliberately does **not** turn off GPU acceleration or disable the microphone/camera/media permission path. Those can affect voice/video calls and screen sharing. Discord still controls its own rendering, messages, call implementation, and account features. This is a visual/resource-reduction pass, not proof of a specific RAM/CPU/GPU reduction, and it does not guarantee removal of every upsell/promotion.
