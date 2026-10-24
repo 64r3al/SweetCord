@@ -1,21 +1,14 @@
 name: SweetCord desktop shell
 
-# A single writer prevents concurrent builds from racing on the mutable nightly tag/release asset.
-concurrency:
-  group: sweetcord-nightly-release
-  cancel-in-progress: false
-
 on:
   push:
     paths:
       - "desktop-electron/**"
-      - "desktop-tauri/**"
       - "Launch SweetCord Desktop.bat"
       - ".github/workflows/desktop-shell.yml"
   pull_request:
     paths:
       - "desktop-electron/**"
-      - "desktop-tauri/**"
       - "Launch SweetCord Desktop.bat"
       - ".github/workflows/desktop-shell.yml"
   workflow_dispatch:
@@ -67,6 +60,10 @@ jobs:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs: windows-package
     runs-on: ubuntu-latest
+    # Serialize only the writer of the mutable nightly tag/release; PR builds can run in parallel.
+    concurrency:
+      group: sweetcord-nightly-release
+      cancel-in-progress: false
     permissions:
       contents: write
     steps:
