@@ -35,6 +35,9 @@ jobs:
         with:
           workspaces: desktop-tauri/src-tauri -> target
 
+      - name: Check Tauri injected JavaScript syntax
+        run: node --check desktop-tauri/lean-mode.js
+
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
