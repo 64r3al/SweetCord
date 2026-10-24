@@ -141,7 +141,7 @@ const LEAN_STYLES = [
 
   /* Avoid expensive blur/compositing on decorative surfaces. */
   'html.sweetcord-lean-mode #app-mount [class*="backdrop" i],',
-  'html.sweetcord-lean-mode #app-mount [class*="blur" i]'
+  'html.sweetcord-lean-mode #app-mount [class*="blur" i]',
   '{ -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }',
 
   /* Disable decorative hover/entrance motion, but do not hide call or media controls. */
@@ -156,7 +156,7 @@ const LEAN_STYLES = [
   'html.sweetcord-trim-profile-decorations #app-mount [class*="profileEffects" i],',
   'html.sweetcord-trim-profile-decorations #app-mount [class*="avatarDecoration" i],',
   'html.sweetcord-trim-profile-decorations #app-mount [class*="profileDecoration" i],',
-  'html.sweetcord-trim-profile-decorations #app-mount [class*="profilePremium" i]'
+  'html.sweetcord-trim-profile-decorations #app-mount [class*="profilePremium" i]',
   '{ display: none !important; }'
 ].join("\n");
 
