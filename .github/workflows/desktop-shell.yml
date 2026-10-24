@@ -21,7 +21,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   windows-package:
@@ -61,15 +61,31 @@ jobs:
           if-no-files-found: error
           retention-days: 14
 
+  publish-nightly:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: windows-package
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Check out source for tagging
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: true
+
+      - name: Download Windows installer artifact
+        uses: actions/download-artifact@v8
+        with:
+          name: SweetCord-Windows-Installer
+          path: desktop-electron/release
+
       - name: Move nightly tag to this build
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         shell: bash
         run: |
           git tag -f nightly "$GITHUB_SHA"
           git push origin refs/tags/nightly --force
 
       - name: Publish the downloadable Windows preview
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: nightly
