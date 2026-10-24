@@ -32,6 +32,11 @@ test("avatar processing is batched and avoids repeat full-document scans", () =>
   assert.match(source, /attributeFilter: \["src"\]/);
 });
 
+test("overlapping queued DOM subtrees are processed only from outermost nodes", () => {
+  const source = buildLeanModeScript(defaults);
+  assert.match(source, /coveredByQueuedAncestor/);
+  assert.match(source, /pendingNodes\.has\(parent\)/);
+});
 test("disabling static avatars generates a reversible configuration", () => {
   const source = buildLeanModeScript({ ...defaults, staticAnimatedAvatars: false });
   assert.match(source, /"staticAnimatedAvatars":false/);
