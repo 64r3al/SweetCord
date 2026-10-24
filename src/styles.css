@@ -580,3 +580,424 @@ button:focus-visible, a:focus-visible { outline: 2px solid #c5b8ff; outline-offs
 }
 
 .sc-modal-error { margin: 0 0 14px; padding: 10px 11px; border: 1px solid rgba(234,105,124,.22); border-radius: 9px; background: rgba(162,54,74,.075); color: #e5a9b1; font-size: 10px; line-height: 1.65; overflow-wrap: anywhere; }
+
+/* SweetCord UI refinement: smoother motion, clearer hierarchy, calmer surfaces. */
+:root {
+  --sc-ease-out: cubic-bezier(.22, 1, .36, 1);
+  --sc-ease-standard: cubic-bezier(.2, .75, .25, 1);
+  --sc-transition-fast: 140ms var(--sc-ease-standard);
+  --sc-transition: 210ms var(--sc-ease-out);
+}
+
+::selection {
+  color: #fff;
+  background: rgba(132, 108, 226, .55);
+}
+
+button, a, input, textarea {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button, a {
+  touch-action: manipulation;
+}
+
+.page-shell,
+.native-dashboard,
+.app-preview,
+.sc-app-shell {
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+.page-shell .login-card,
+.native-dashboard .dashboard-section,
+.sc-app-shell .sc-sidepanel,
+.sc-app-shell .sc-chat-main,
+.sc-app-shell .sc-composer-input,
+.sc-app-shell .sc-modal {
+  transition:
+    border-color var(--sc-transition),
+    background-color var(--sc-transition),
+    box-shadow var(--sc-transition);
+}
+
+.page-shell .login-card {
+  border-color: rgba(255,255,255,.105);
+  background:
+    radial-gradient(ellipse at 90% 0%, rgba(145,119,230,.07), transparent 42%),
+    linear-gradient(150deg, rgba(25,25,37,.96), rgba(14,15,22,.97));
+  box-shadow: 0 24px 80px rgba(0,0,0,.3), inset 0 1px rgba(255,255,255,.055);
+}
+
+.page-shell .discord-button,
+.page-shell .account-button,
+.page-shell .demo-button,
+.page-shell .primary-button,
+.native-dashboard .friend-search button,
+.native-dashboard .request-actions button,
+.sc-app-shell .sc-primary-button,
+.sc-app-shell .sc-secondary-button,
+.sc-app-shell .sc-composer-input button {
+  transition:
+    transform var(--sc-transition-fast),
+    background-color var(--sc-transition-fast),
+    background var(--sc-transition-fast),
+    border-color var(--sc-transition-fast),
+    box-shadow var(--sc-transition-fast),
+    color var(--sc-transition-fast),
+    opacity var(--sc-transition-fast);
+}
+
+.page-shell .discord-button:active:not(:disabled),
+.page-shell .account-button:active:not(:disabled),
+.page-shell .demo-button:active:not(:disabled),
+.page-shell .primary-button:active:not(:disabled),
+.native-dashboard .friend-search button:active:not(:disabled),
+.sc-app-shell .sc-primary-button:active:not(:disabled),
+.sc-app-shell .sc-secondary-button:active:not(:disabled),
+.sc-app-shell .sc-composer-input button:active:not(:disabled) {
+  transform: translateY(0) scale(.985);
+}
+
+.page-shell .text-button,
+.page-shell .help-link,
+.page-shell .auth-switch button,
+.page-shell .back-link,
+.native-dashboard .sidebar-signout,
+.sc-app-shell .sc-icon-button,
+.sc-app-shell .sc-tiny-add,
+.sc-app-shell .sc-friend-message,
+.sc-app-shell .sc-banner button,
+.sc-app-shell .sc-modal-close {
+  transition: color var(--sc-transition-fast), background var(--sc-transition-fast), border-color var(--sc-transition-fast), transform var(--sc-transition-fast);
+}
+
+.sc-app-shell {
+  isolation: isolate;
+  background:
+    radial-gradient(ellipse at 78% 0%, rgba(111,89,200,.09), transparent 39%),
+    radial-gradient(ellipse at 0% 100%, rgba(53,79,128,.045), transparent 36%),
+    var(--sc-bg);
+}
+
+.sc-app-shell .sc-rail {
+  background: linear-gradient(180deg, #111218, #0f1015);
+  box-shadow: 8px 0 28px rgba(0,0,0,.06);
+}
+
+.sc-app-shell .sc-sidepanel {
+  background:
+    radial-gradient(ellipse at 12% 0%, rgba(115,91,192,.055), transparent 40%),
+    linear-gradient(180deg, #14151d, #12131a);
+}
+
+.sc-app-shell .sc-sidepanel-header,
+.sc-app-shell .sc-chat-topbar {
+  background: rgba(18,19,27,.88);
+  -webkit-backdrop-filter: blur(16px) saturate(1.12);
+  backdrop-filter: blur(16px) saturate(1.12);
+}
+
+.sc-app-shell .sc-rail-home,
+.sc-app-shell .sc-workspace-icon,
+.sc-app-shell .sc-rail-add,
+.sc-app-shell .sc-rail-help {
+  transition:
+    transform var(--sc-transition),
+    border-radius var(--sc-transition),
+    background var(--sc-transition),
+    border-color var(--sc-transition),
+    color var(--sc-transition),
+    box-shadow var(--sc-transition);
+}
+
+.sc-app-shell .sc-rail-home:hover,
+.sc-app-shell .sc-workspace-icon:hover,
+.sc-app-shell .sc-rail-add:hover,
+.sc-app-shell .sc-rail-help:hover {
+  transform: translateY(-1px);
+}
+
+.sc-app-shell .sc-workspace-icon.is-active,
+.sc-app-shell .sc-rail-home.is-active {
+  box-shadow: 0 5px 20px rgba(103,79,191,.21), inset 0 1px rgba(255,255,255,.12);
+}
+
+.sc-app-shell .sc-dm-item,
+.sc-app-shell .sc-nav-item {
+  transition:
+    background var(--sc-transition-fast),
+    border-color var(--sc-transition-fast),
+    color var(--sc-transition-fast),
+    transform var(--sc-transition-fast);
+}
+
+.sc-app-shell .sc-dm-item:hover,
+.sc-app-shell .sc-nav-item:hover {
+  transform: translateX(2px);
+}
+
+.sc-app-shell .sc-dm-item.is-selected,
+.sc-app-shell .sc-nav-item.is-selected {
+  box-shadow: inset 2px 0 0 rgba(180,161,255,.82), inset 0 1px rgba(255,255,255,.025);
+  background: linear-gradient(90deg, rgba(146,122,237,.16), rgba(146,122,237,.07));
+}
+
+.sc-app-shell .sc-avatar {
+  box-shadow: 0 1px 0 rgba(255,255,255,.035);
+  transition: transform var(--sc-transition), box-shadow var(--sc-transition);
+}
+
+.sc-app-shell .sc-dm-item:hover .sc-avatar,
+.sc-app-shell .sc-friend-item:hover .sc-avatar {
+  transform: scale(1.035);
+  box-shadow: 0 4px 14px rgba(0,0,0,.15);
+}
+
+.sc-app-shell .sc-chat-main {
+  background:
+    radial-gradient(ellipse at 72% 0%, rgba(106,86,181,.035), transparent 42%),
+    rgba(12,13,18,.78);
+}
+
+.sc-app-shell .sc-active-title strong {
+  font-size: 13px;
+  letter-spacing: -.15px;
+}
+
+.sc-app-shell .sc-message-scroll {
+  scroll-behavior: smooth;
+  overscroll-behavior: contain;
+  scrollbar-color: rgba(174,157,226,.22) transparent;
+}
+
+.sc-app-shell .sc-message-scroll::-webkit-scrollbar,
+.sc-app-shell .sc-dm-list::-webkit-scrollbar,
+.sc-app-shell .sc-friends-list::-webkit-scrollbar,
+.sc-app-shell .sc-channel-list::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+
+.sc-app-shell .sc-message-scroll::-webkit-scrollbar-thumb,
+.sc-app-shell .sc-dm-list::-webkit-scrollbar-thumb,
+.sc-app-shell .sc-friends-list::-webkit-scrollbar-thumb,
+.sc-app-shell .sc-channel-list::-webkit-scrollbar-thumb {
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background: rgba(174,157,226,.18);
+  background-clip: padding-box;
+}
+
+.sc-app-shell .sc-message-scroll::-webkit-scrollbar-thumb:hover,
+.sc-app-shell .sc-dm-list::-webkit-scrollbar-thumb:hover,
+.sc-app-shell .sc-friends-list::-webkit-scrollbar-thumb:hover,
+.sc-app-shell .sc-channel-list::-webkit-scrollbar-thumb:hover {
+  background: rgba(174,157,226,.32);
+  background-clip: padding-box;
+}
+
+.sc-app-shell .sc-channel-intro,
+.sc-app-shell .sc-conversation-intro {
+  animation: sc-content-enter 380ms var(--sc-ease-out) both;
+}
+
+.sc-app-shell .sc-intro-icon,
+.sc-app-shell .sc-welcome-symbol {
+  box-shadow: 0 10px 34px rgba(68,51,125,.13), inset 0 1px rgba(255,255,255,.06);
+}
+
+.sc-app-shell .sc-channel-intro h1,
+.sc-app-shell .sc-conversation-intro h1 {
+  letter-spacing: -.85px;
+}
+
+.sc-app-shell .sc-message {
+  padding: 10px 10px;
+  transition: background var(--sc-transition-fast), border-color var(--sc-transition-fast);
+}
+
+.sc-app-shell .sc-message:hover {
+  background: rgba(255,255,255,.027);
+}
+
+.sc-app-shell .sc-message-meta strong {
+  font-size: 11px;
+  letter-spacing: -.05px;
+}
+
+.sc-app-shell .sc-message-meta time {
+  font-size: 10px;
+}
+
+.sc-app-shell .sc-message-content p {
+  color: #c7c3d2;
+  font-size: 12px;
+  line-height: 1.8;
+}
+
+.sc-app-shell .sc-composer {
+  padding-top: 10px;
+  background: linear-gradient(180deg, transparent, rgba(12,13,18,.55) 22%);
+}
+
+.sc-app-shell .sc-composer-input {
+  border-color: rgba(255,255,255,.095);
+  border-radius: 15px;
+  background: linear-gradient(145deg, #1a1b24, #171820);
+  box-shadow: 0 10px 32px rgba(0,0,0,.13), inset 0 1px rgba(255,255,255,.025);
+}
+
+.sc-app-shell .sc-composer-input:focus-within {
+  border-color: rgba(169,148,255,.48);
+  box-shadow: 0 0 0 3px rgba(145,118,240,.09), 0 12px 35px rgba(0,0,0,.16);
+}
+
+.sc-app-shell .sc-composer-input textarea {
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+.sc-app-shell .sc-composer-input button {
+  box-shadow: 0 4px 12px rgba(70,52,138,.2), inset 0 1px rgba(255,255,255,.1);
+}
+
+.sc-app-shell .sc-chat-footer {
+  background: rgba(8,9,13,.16);
+}
+
+.sc-app-shell .sc-home-card {
+  background: linear-gradient(145deg, rgba(255,255,255,.028), rgba(255,255,255,.012));
+  box-shadow: inset 0 1px rgba(255,255,255,.025);
+  transition:
+    transform var(--sc-transition),
+    border-color var(--sc-transition),
+    background var(--sc-transition),
+    box-shadow var(--sc-transition);
+}
+
+.sc-app-shell .sc-home-card:hover {
+  transform: translateY(-3px);
+  border-color: rgba(172,154,255,.3);
+  background: linear-gradient(145deg, rgba(153,129,255,.07), rgba(255,255,255,.018));
+  box-shadow: 0 12px 32px rgba(0,0,0,.12), inset 0 1px rgba(255,255,255,.04);
+}
+
+.sc-app-shell .sc-primary-button {
+  box-shadow: 0 5px 16px rgba(71,53,143,.16), inset 0 1px rgba(255,255,255,.09);
+}
+
+.sc-app-shell .sc-secondary-button {
+  transition:
+    transform var(--sc-transition-fast),
+    border-color var(--sc-transition-fast),
+    background var(--sc-transition-fast),
+    color var(--sc-transition-fast);
+}
+
+.sc-app-shell .sc-secondary-button:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.sc-app-shell .sc-modal-backdrop {
+  background: rgba(4,4,8,.68);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  animation: sc-fade-in 180ms ease both;
+}
+
+.sc-app-shell .sc-modal {
+  border-color: rgba(255,255,255,.13);
+  box-shadow: 0 30px 100px rgba(0,0,0,.5), inset 0 1px rgba(255,255,255,.04);
+  animation: sc-modal-in 230ms var(--sc-ease-out) both;
+}
+
+.sc-app-shell .sc-modal-close:hover,
+.sc-app-shell .sc-banner button:hover {
+  transform: scale(1.04);
+}
+
+.sc-app-shell :is(button, a, input, textarea):focus-visible {
+  outline: 2px solid rgba(192,174,255,.95);
+  outline-offset: 3px;
+  box-shadow: 0 0 0 4px rgba(145,118,240,.12);
+}
+
+.native-dashboard .dashboard-section {
+  background: linear-gradient(145deg, rgba(255,255,255,.023), rgba(255,255,255,.012));
+  border-color: rgba(255,255,255,.085);
+}
+
+.native-dashboard .friend-row,
+.native-dashboard .request-row {
+  transition: background var(--sc-transition-fast);
+  border-radius: 10px;
+}
+
+.native-dashboard .friend-row:hover,
+.native-dashboard .request-row:hover {
+  background: rgba(255,255,255,.022);
+}
+
+.native-dashboard .friend-avatar {
+  box-shadow: 0 3px 12px rgba(0,0,0,.12);
+  transition: transform var(--sc-transition);
+}
+
+.native-dashboard .friend-row:hover .friend-avatar,
+.native-dashboard .request-row:hover .friend-avatar {
+  transform: scale(1.04);
+}
+
+.page-shell .field-wrap,
+.page-shell .friend-search,
+.page-shell .sc-modal form input,
+.page-shell .sc-modal form textarea {
+  transition: border-color var(--sc-transition-fast), box-shadow var(--sc-transition-fast), background var(--sc-transition-fast);
+}
+
+@keyframes sc-content-enter {
+  from { opacity: 0; transform: translateY(7px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 720px) {
+  .sc-app-shell .sc-sidepanel {
+    box-shadow: 18px 0 60px rgba(0,0,0,.42);
+  }
+
+  .sc-app-shell .sc-message-content p {
+    font-size: 12px;
+    line-height: 1.75;
+  }
+
+  .sc-app-shell .sc-composer {
+    padding-top: 5px;
+    background: linear-gradient(180deg, transparent, rgba(12,13,18,.8) 18%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html:focus-within {
+    scroll-behavior: auto;
+  }
+
+  .page-shell *,
+  .native-dashboard *,
+  .app-preview *,
+  .sc-app-shell *,
+  .page-shell *::before,
+  .native-dashboard *::before,
+  .app-preview *::before,
+  .sc-app-shell *::before,
+  .page-shell *::after,
+  .native-dashboard *::after,
+  .app-preview *::after,
+  .sc-app-shell *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: .01ms !important;
+  }
+}
