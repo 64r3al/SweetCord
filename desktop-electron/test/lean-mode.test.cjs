@@ -30,6 +30,8 @@ test("avatar processing is batched and avoids repeat full-document scans", () =>
   assert.match(source, /MutationObserver/);
   assert.match(source, /previousStaticState !== cfg\.staticAnimatedAvatars/);
   assert.match(source, /attributeFilter: \["src"\]/);
+  assert.match(source, /getElementById\("app-mount"\) \|\| document/);
+  assert.match(source, /isCoveredByQueuedNode/);
 });
 
 test("overlapping queued DOM subtrees are processed only from outermost nodes", () => {
