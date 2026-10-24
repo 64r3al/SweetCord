@@ -14,7 +14,9 @@ The repository now also includes a separate **Electron desktop shell** that open
 - Run it on Windows with [Launch SweetCord Desktop.bat](Launch%20SweetCord%20Desktop.bat).
 - Desktop source and instructions: [desktop-electron/README.md](desktop-electron/README.md).
 - Sign in only on Discord's official page; SweetCord does not offer a paste-token form.
-- This first shell does not yet remove Nitro/Quests UI or prove a CPU/RAM improvement. The current React/Supabase SweetCord app remains available via [Launch SweetCord.bat](Launch%20SweetCord.bat).
+- The desktop shell has a configurable ultra-low-effects profile: hides common promo destinations, disables UI transitions, removes decorative profile layers, and can replace animated avatar GIFs with static PNGs.
+- It keeps GPU acceleration and call/media permissions enabled. These changes are compatibility best-effort; no fixed RAM/CPU/GPU savings are claimed until measured on real PCs.
+- The original React/Supabase SweetCord app remains available via [Launch SweetCord.bat](Launch%20SweetCord.bat).
 
 > Important: third-party Discord client modifications may violate Discord's Terms of Service and can carry account risk. SweetCord is unofficial and not affiliated with Discord.
 
@@ -49,19 +51,6 @@ Manual setup, or setup on another operating system:
 3. Create a **dedicated SweetCord Supabase project** (do not use the unrelated Exam website project).
 4. Follow the setup steps below and configure the environment variables.
 5. From the repository folder, run:
-
-   ```bash
-   npm install
-   npm run dev
-   ```
-
-6. Open the local URL printed by Vite. The default redirect allowlist in the examples uses `http://127.0.0.1:5173`; use the exact local origin shown in your browser.
-
-1. Install a current Node.js LTS release.
-2. Clone this repository and copy `.env.example` to `.env.local`.
-3. Create a **dedicated SweetCord Supabase project** (do not use the unrelated Exam website project).
-4. Follow the setup steps below and configure the environment variables.
-5. Install dependencies and start Vite:
 
    ```bash
    npm install
