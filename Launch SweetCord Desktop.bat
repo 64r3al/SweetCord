@@ -42,7 +42,7 @@ if errorlevel 1 (
 )
 
 if not exist "node_modules\electron\dist\electron.exe" (
-  echo [SETUP] Installing Electron dependencies on first launch...
+  echo [SETUP] Installing SweetCord Desktop dependencies...
   call npm.cmd install
   if errorlevel 1 (
     echo [ERROR] Dependency installation failed.
@@ -52,16 +52,49 @@ if not exist "node_modules\electron\dist\electron.exe" (
   )
 )
 
-echo [START] Launching SweetCord Desktop...
-echo Log file: "%LOG_FILE%"
-call npm.cmd start > "%LOG_FILE%" 2>&1
-set "APP_EXIT_CODE=%ERRORLEVEL%"
-popd
+if not exist "node_modules\electron\dist\electron.exe" (
+  echo.
+  echo [DOWNLOAD] The Electron runtime is not installed yet.
+  echo Its first download comes from the official Electron GitHub release.
+  echo Keep this window open; a slow or blocked connection may take time.
+  echo.
+  call npm.cmd run prepare:electron
+  set "DOWNLOAD_CODE=%ERRORLEVEL%"
+  if not "%DOWNLOAD_CODE%"=="0" (
+    echo.
+    echo [ERROR] Electron could not download its desktop runtime.
+    echo Check that your connection can reach github.com and github.com release downloads.
+    echo Do not reinstall all dependencies yet; this is the separate Electron runtime.
+    popd
+    pause
+    exit /b 1
+  )
+)
 
+if not exist "node_modules\electron\dist\electron.exe" (
+  echo.
+  echo [ERROR] Electron's runtime is still missing after the download command.
+  echo Run this manually in the desktop-electron folder:
+  echo   npm.cmd run prepare:electron
+  popd
+  pause
+  exit /b 1
+)
+
+echo.
+echo [START] Starting SweetCord Desktop...
+echo [INFO] Electron runtime is present.
+echo [INFO] Runtime output will also be saved to:
+echo        "%LOG_FILE%"
+echo.
+call npm.cmd start
+set "APP_EXIT_CODE=%ERRORLEVEL%"
 if not "%APP_EXIT_CODE%"=="0" (
   echo.
   echo [FAILED] SweetCord Desktop exited with code %APP_EXIT_CODE%.
-  echo Read: "%LOG_FILE%"
+  echo If the window never appeared, copy the error text above.
+  echo Log file from previous launch, if present: "%LOG_FILE%"
   pause
 )
+popd
 exit /b %APP_EXIT_CODE%
