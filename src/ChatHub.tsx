@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import type { Session } from "@supabase/supabase-js";
 import {
   Activity, ArrowLeft, ArrowRight, AtSign, Check, ChevronDown, CircleHelp,
@@ -43,6 +43,21 @@ function Avatar({ profile, size = "normal" }: { profile?: Profile | null; size?:
   }
   return <div className={`sc-avatar sc-avatar-${size} sc-avatar-fallback`} aria-label={label}>{label.slice(0, 1).toUpperCase()}</div>;
 }
+
+const MessageRow = memo(function MessageRow({ message, userId }: { message: Message; userId: string }) {
+  return (
+    <article className={`sc-message ${message.sender_id === userId ? "is-own-message" : ""}`} >
+      <Avatar profile={message.sender} size="normal" />
+      <div className="sc-message-content">
+        <div className="sc-message-meta">
+          <strong>{message.sender_id === userId ? "You" : message.sender?.display_name || message.sender?.username || "SweetCord member"}</strong>
+          <time dateTime={message.created_at}>{timeLabel(message.created_at)}</time>
+        </div>
+        <p>{message.content}</p>
+      </div>
+    </article>
+  );
+});
 
 function timeLabel(value: string) {
   const date = new Date(value);
@@ -232,15 +247,38 @@ export default function ChatHub({ session, onSignOut }: Props) {
   useEffect(() => {
     void loadMessages();
     if (!supabase || (!activeChannelId && !activeConversationId)) return;
-    const filter = activeConversationId ? `conversation_id=eq.${activeConversationId}` : `channel_id=eq.${activeChannelId}`;
+
+    const filter = activeConversationId
+      ? `conversation_id=eq.${activeConversationId}`
+      : `channel_id=eq.${activeChannelId}`;
+
+    // Insert events arrive with the new row, so append them locally rather than
+    // re-querying 100 messages + their sender profiles for every incoming message.
     const live = supabase.channel(`sweetcord-messages-${activeConversationId || activeChannelId}`)
-      .on("postgres_changes", { event: "*", schema: "public", table: "messages", filter }, () => { void loadMessages(); })
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "messages", filter }, (payload) => {
+        const incoming = payload.new as unknown as Message;
+        if (!incoming?.id) return;
+
+        setMessages((current) => {
+          if (current.some((message) => message.id === incoming.id)) return current;
+
+          const withSender: Message = {
+            ...incoming,
+            sender: profileById.get(incoming.sender_id)
+          };
+          return [...current, withSender]
+            .sort((a, b) => a.created_at.localeCompare(b.created_at))
+            .slice(-100);
+        });
+      })
       .subscribe();
+
     return () => { void supabase?.removeChannel(live); };
-  }, [activeChannelId, activeConversationId, loadMessages]);
+  }, [activeChannelId, activeConversationId, loadMessages, profileById]);
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+    // Jump immediately instead of animating a full message list on every update.
+    bottomRef.current?.scrollIntoView({ behavior: "auto", block: "end" });
   }, [messages.length, activeConversationId, activeChannelId]);
 
   const handleSendMessage = async (event: FormEvent<HTMLFormElement>) => {
@@ -255,25 +293,44 @@ export default function ChatHub({ session, onSignOut }: Props) {
     setWorking(true);
     setError("");
     try {
+      let insertedMessage: Message | null = null;
+      const selectedColumns = "id,channel_id,conversation_id,sender_id,content,created_at,edited_at";
+
       if (activeConversationId) {
-        const { error: insertError } = await supabase.from("messages").insert({
+        const { data, error: insertError } = await supabase.from("messages").insert({
           conversation_id: activeConversationId,
           channel_id: null,
           sender_id: userId,
           content
-        });
+        }).select(selectedColumns).single();
         if (insertError) throw insertError;
+        insertedMessage = data as Message;
       } else if (activeChannelId) {
-        const { error: insertError } = await supabase.from("messages").insert({
+        const { data, error: insertError } = await supabase.from("messages").insert({
           channel_id: activeChannelId,
           conversation_id: null,
           sender_id: userId,
           content
-        });
+        }).select(selectedColumns).single();
         if (insertError) throw insertError;
+        insertedMessage = data as Message;
+      }
+
+      // Render the sender's own message immediately. The Realtime insert handler
+      // checks IDs, so a later copy of this same event will not duplicate it.
+      if (insertedMessage) {
+        const optimisticMessage: Message = {
+          ...insertedMessage,
+          sender: ownProfile ?? profileById.get(userId)
+        };
+        setMessages((current) => {
+          if (current.some((message) => message.id === optimisticMessage.id)) return current;
+          return [...current, optimisticMessage]
+            .sort((a, b) => a.created_at.localeCompare(b.created_at))
+            .slice(-100);
+        });
       }
       setComposer("");
-      await loadMessages();
     } catch (caught: unknown) {
       setError(readableError(caught));
     } finally {
@@ -591,7 +648,7 @@ export default function ChatHub({ session, onSignOut }: Props) {
             <div className="sc-message-scroll">
               <div className="sc-conversation-intro"><div className="sc-intro-icon"><MessageCircle size={25} /></div><span className="sc-overline">PRIVATE CONVERSATION</span><h1>{conversationTitle}</h1><p>{activeConversation.kind === "group" ? "A private group for your squad." : "This is the beginning of your direct message history."}</p><div className="sc-intro-rule"><span /></div></div>
               {messagesLoading && !messages.length && <div className="sc-message-empty">Loading messages…</div>}
-              {messages.map((message) => <article className={`sc-message ${message.sender_id === userId ? "is-own-message" : ""}`} key={message.id}><Avatar profile={message.sender} size="normal" /><div className="sc-message-content"><div className="sc-message-meta"><strong>{message.sender_id === userId ? "You" : message.sender?.display_name || message.sender?.username || "SweetCord member"}</strong><time dateTime={message.created_at}>{timeLabel(message.created_at)}</time></div><p>{message.content}</p></div></article>)}
+              {messages.map((message) => <MessageRow key={message.id} message={message} userId={userId} />)}
               {!messagesLoading && messages.length === 0 && <div className="sc-empty-chat"><Sparkles size={18} /><span>No messages yet. Say hello to get things started.</span></div>}
               <div ref={bottomRef} />
             </div>
@@ -602,7 +659,7 @@ export default function ChatHub({ session, onSignOut }: Props) {
             <div className="sc-message-scroll">
               <div className="sc-channel-intro"><div className="sc-intro-icon"><Hash size={25} /></div><span className="sc-overline">WELCOME TO #{activeChannel.name.toUpperCase()}</span><h1>{activeChannel.name}</h1><p>{activeChannel.topic || `This is the start of the #${activeChannel.name} channel.`}</p><div className="sc-intro-rule"><span /></div></div>
               {messagesLoading && !messages.length && <div className="sc-message-empty">Loading messages…</div>}
-              {messages.map((message) => <article className={`sc-message ${message.sender_id === userId ? "is-own-message" : ""}`} key={message.id}><Avatar profile={message.sender} size="normal" /><div className="sc-message-content"><div className="sc-message-meta"><strong>{message.sender_id === userId ? "You" : message.sender?.display_name || message.sender?.username || "SweetCord member"}</strong><time dateTime={message.created_at}>{timeLabel(message.created_at)}</time></div><p>{message.content}</p></div></article>)}
+              {messages.map((message) => <MessageRow key={message.id} message={message} userId={userId} />)}
               {!messagesLoading && messages.length === 0 && <div className="sc-empty-chat"><MessageCircle size={18} /><span>No messages here yet. Start the conversation.</span></div>}
               <div ref={bottomRef} />
             </div>
