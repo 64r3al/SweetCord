@@ -152,3 +152,25 @@ fn main() {
         .run(tauri::generate_context!())
         .expect("error while running SweetCord Tauri preview");
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn trusted_host_matching_rejects_suffix_spoofing() {
+        assert!(host_matches("discord.com", DISCORD_HOSTS));
+        assert!(host_matches("cdn.discord.com", DISCORD_HOSTS));
+        assert!(!host_matches("evil-discord.com", DISCORD_HOSTS));
+        assert!(!host_matches("discord.com.evil.example", DISCORD_HOSTS));
+    }
+
+    #[test]
+    fn internal_navigation_requires_https_and_an_allowlisted_host() {
+        assert!(is_trusted_url(&Url::parse("https://discord.com/app").unwrap()));
+        assert!(is_trusted_url(&Url::parse("https://accounts.google.com/").unwrap()));
+        assert!(!is_trusted_url(&Url::parse("http://discord.com/app").unwrap()));
+        assert!(!is_trusted_url(&Url::parse("https://discord.com.evil.example/").unwrap()));
+        assert!(!is_trusted_url(&Url::parse("https://example.com/").unwrap()));
+    }
+}
