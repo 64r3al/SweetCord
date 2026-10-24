@@ -156,6 +156,20 @@ function makeMenu() {
   Menu.setApplicationMenu(Menu.buildFromTemplate(template));
 }
 
+function getBrowserUserAgent() {
+  const chromeMajor = String(process.versions.chrome || "0").split(".")[0] || "0";
+  const browserVersion = `AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${chromeMajor}.0.0.0 Safari/537.36`;
+  const platform = process.platform;
+
+  if (platform === "darwin") {
+    return `Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) ${browserVersion}`;
+  }
+  if (platform === "linux") {
+    return `Mozilla/5.0 (X11; Linux x86_64) ${browserVersion}`;
+  }
+  return `Mozilla/5.0 (Windows NT 10.0; Win64; x64) ${browserVersion}`;
+}
+
 function installDiscordPermissions(discordSession) {
   const isDiscordOrigin = (origin) => {
     const parsed = parseUrl(origin);
@@ -197,6 +211,12 @@ function createMainWindow(discordSession) {
 
   mainWindow = window;
   window.setMenuBarVisibility(false);
+
+  // Use Electron's Chromium major version but a normal browser UA, matching
+  // the compatibility approach used by existing Discord web-app wrappers.
+  const browserUserAgent = getBrowserUserAgent();
+  discordSession.setUserAgent(browserUserAgent);
+  window.webContents.setUserAgent(browserUserAgent);
 
   window.on("page-title-updated", (event) => {
     event.preventDefault();
