@@ -1001,3 +1001,92 @@ button, a {
     transition-duration: .01ms !important;
   }
 }
+
+/* Low-overhead mode: keep surfaces attractive without expensive live blur or scroll animation. */
+.ambient {
+  filter: none !important;
+  opacity: 0 !important;
+}
+
+.sc-app-shell .sc-sidepanel-header,
+.sc-app-shell .sc-chat-topbar {
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  background: #12131a;
+}
+
+.sc-app-shell .sc-modal-backdrop {
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  background: rgba(4,4,8,.82);
+}
+
+.sc-app-shell .sc-message-scroll {
+  scroll-behavior: auto !important;
+}
+
+.sc-app-shell .sc-message-scroll,
+.sc-app-shell .sc-dm-list,
+.sc-app-shell .sc-friends-list,
+.sc-app-shell .sc-channel-list {
+  overscroll-behavior: contain;
+}
+
+.sc-app-shell .sc-app-shell,
+.sc-app-shell .sc-message,
+.sc-app-shell .sc-dm-item,
+.sc-app-shell .sc-nav-item,
+.sc-app-shell .sc-home-card,
+.sc-app-shell .sc-composer-input,
+.sc-app-shell .sc-primary-button,
+.sc-app-shell .sc-secondary-button,
+.page-shell .login-card,
+.page-shell .discord-button,
+.page-shell .account-button,
+.page-shell .demo-button,
+.page-shell .primary-button {
+  transition-property: transform, background-color, background, border-color, color, opacity !important;
+}
+
+.sc-app-shell .sc-rail,
+.sc-app-shell .sc-sidepanel,
+.sc-app-shell .sc-chat-main,
+.sc-app-shell .sc-composer,
+.sc-app-shell .sc-message-scroll {
+  contain: layout paint;
+}
+
+.sc-app-shell .sc-chat-main {
+  min-height: 0;
+}
+
+.sc-app-shell .sc-message-scroll {
+  min-height: 0;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .sc-app-shell .sc-message:hover {
+    background: rgba(255,255,255,.018);
+  }
+
+  .sc-app-shell .sc-home-card:hover {
+    box-shadow: inset 0 1px rgba(255,255,255,.025);
+  }
+
+  .sc-app-shell .sc-avatar {
+    transition: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sc-app-shell *,
+  .sc-app-shell *::before,
+  .sc-app-shell *::after,
+  .page-shell *,
+  .page-shell *::before,
+  .page-shell *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}
