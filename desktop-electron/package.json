@@ -7,7 +7,7 @@
   "scripts": {
     "start": "electron .",
     "package:win": "electron-builder --win nsis",
-    "prepare:electron": "install-electron --no",
+    "prepare:electron": "node ./node_modules/electron/install.js",
     "test": "node --test"
   },
   "devDependencies": {
