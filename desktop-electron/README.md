@@ -55,7 +55,7 @@ The installer is written to `desktop-electron/release/`.
 
 The desktop shell now enables **Lean interface mode** by default. Open **Performance** in the app menu to toggle it. The setting is saved locally in SweetCord's own preferences file.
 
-It hides common navigation entries for optional destinations such as Store, Shop, Quests, Nitro and Discovery, removes a few promotion containers when their class names are recognizable, shortens transition timings, and removes backdrop blur effects. These selectors are best-effort and can stop matching when Discord changes its web UI; reload Discord after a UI update if needed.
+It hides common navigation entries for optional destinations such as Store, Shop, Quests, Nitro and Discovery, removes a few promotion containers when their class names are recognizable, shortens transition timings, and removes backdrop blur effects. These selectors are best-effort and can stop matching when Discord changes its web UI; reload Discord after a UI update if needed. Use `Ctrl+Shift+M` to toggle this mode quickly (on macOS, use `Cmd+Shift+M`).
 
 The mode deliberately does **not** turn off GPU acceleration or disable the microphone/camera/media permission path. Those can affect voice/video calls and screen sharing. Discord still controls its own rendering, messages, call implementation, and account features. This is a visual/resource-reduction pass, not proof of a specific RAM/CPU/GPU reduction, and it does not guarantee removal of every upsell/promotion.
 
