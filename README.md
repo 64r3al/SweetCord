@@ -4,6 +4,17 @@
 
 > SweetCord is not affiliated with or endorsed by Discord. Discord sign-in redirects to Discord's official OAuth page; SweetCord never asks for or stores a Discord account password or user token.
 
+## Discord-backed desktop experiment
+
+The repository now also includes a separate **Electron desktop shell** that opens Discord's own web app. This is the closest architecture match to the account-and-voice goal: Discord itself provides the signed-in user's servers, messages, and calls, instead of SweetCord rebuilding those systems.
+
+- Run it on Windows with [Launch SweetCord Desktop.bat](Launch%20SweetCord%20Desktop.bat).
+- Desktop source and instructions: [desktop-electron/README.md](desktop-electron/README.md).
+- Sign in only on Discord's official page; SweetCord does not offer a paste-token form.
+- This first shell does not yet remove Nitro/Quests UI or prove a CPU/RAM improvement. The current React/Supabase SweetCord app remains available via [Launch SweetCord.bat](Launch%20SweetCord.bat).
+
+> Important: third-party Discord client modifications may violate Discord's Terms of Service and can carry account risk. SweetCord is unofficial and not affiliated with Discord.
+
 ## What is in this build
 
 - **Sign-in:** official Discord OAuth through Supabase Auth, plus optional SweetCord email/password accounts.
@@ -15,7 +26,7 @@
 - **Responsive UI:** dark interface designed for desktop first and usable on small screens.
 - **Access rules:** separate SQL schema adds row-level security (RLS) for workspaces, memberships, conversations and messages.
 
-**Not implemented yet:** voice calls, voice-channel transport, file uploads, server invite links/discovery, moderation/reporting tools, and the Tauri desktop build. This is an early foundation, not a production-ready Discord replacement. The app needs its dedicated Supabase backend configured before accounts and chats can work end to end.
+**For the original React/Supabase web app:** voice calls, voice-channel transport, file uploads, server invite links/discovery, moderation/reporting tools, and the Tauri desktop build remain unimplemented. The new Electron shell is a separate experiment that uses Discord's web app directly, so it does not depend on the SweetCord Supabase project for Discord's existing chats.
 
 ## Tech stack
 
