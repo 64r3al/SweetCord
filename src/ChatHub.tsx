@@ -36,13 +36,13 @@ function readableError(error: unknown): string {
   return "That action couldn't be completed. Please try again.";
 }
 
-function Avatar({ profile, size = "normal" }: { profile?: Profile | null; size?: "normal" | "small" | "large" }) {
+const Avatar = memo(function Avatar({ profile, size = "normal" }: { profile?: Profile | null; size?: "normal" | "small" | "large" }) {
   const label = profile?.display_name || profile?.username || "SweetCord";
   if (profile?.avatar_url) {
     return <img className={`sc-avatar sc-avatar-${size}`} src={profile.avatar_url} alt="" loading="lazy" referrerPolicy="no-referrer" />;
   }
   return <div className={`sc-avatar sc-avatar-${size} sc-avatar-fallback`} aria-label={label}>{label.slice(0, 1).toUpperCase()}</div>;
-}
+});
 
 const MessageRow = memo(function MessageRow({ message, userId }: { message: Message; userId: string }) {
   return (
@@ -103,16 +103,16 @@ export default function ChatHub({ session, onSignOut }: Props) {
   const bottomRef = useRef<HTMLDivElement>(null);
 
   const profileById = useMemo(() => new Map(profiles.map((profile) => [profile.id, profile])), [profiles]);
-  const activeWorkspace = workspaces.find((workspace) => workspace.id === activeWorkspaceId) ?? null;
-  const activeChannel = channels.find((channel) => channel.id === activeChannelId) ?? null;
-  const activeConversation = conversations.find((conversation) => conversation.id === activeConversationId) ?? null;
-  const activeChannels = channels.filter((channel) => channel.workspace_id === activeWorkspaceId).sort((a, b) => a.position - b.position);
-  const activeMembers = workspaceMembers.filter((member) => member.workspace_id === activeWorkspaceId);
-  const canManageWorkspace = Boolean(activeWorkspace && activeMembers.some((member) => member.user_id === userId && (member.role === "owner" || member.role === "admin")));
+  const activeWorkspace = useMemo(() => workspaces.find((workspace) => workspace.id === activeWorkspaceId) ?? null, [workspaces, activeWorkspaceId]);
+  const activeChannel = useMemo(() => channels.find((channel) => channel.id === activeChannelId) ?? null, [channels, activeChannelId]);
+  const activeConversation = useMemo(() => conversations.find((conversation) => conversation.id === activeConversationId) ?? null, [conversations, activeConversationId]);
+  const activeChannels = useMemo(() => channels.filter((channel) => channel.workspace_id === activeWorkspaceId).sort((a, b) => a.position - b.position), [channels, activeWorkspaceId]);
+  const activeMembers = useMemo(() => workspaceMembers.filter((member) => member.workspace_id === activeWorkspaceId), [workspaceMembers, activeWorkspaceId]);
+  const canManageWorkspace = useMemo(() => Boolean(activeWorkspace && activeMembers.some((member) => member.user_id === userId && (member.role === "owner" || member.role === "admin"))), [activeWorkspace, activeMembers, userId]);
   const userEmail = session.user.email ?? "SweetCord account";
-  const activeConversationUsers = activeConversation
+  const activeConversationUsers = useMemo(() => activeConversation
     ? participants.filter((participant) => participant.conversation_id === activeConversation.id && participant.user_id !== userId).map((participant) => profileById.get(participant.user_id)).filter((profile): profile is Profile => Boolean(profile))
-    : [];
+    : [], [activeConversation, participants, userId, profileById]);
   const conversationTitle = activeConversation
     ? activeConversation.kind === "group"
       ? activeConversation.title || activeConversationUsers.map((profile) => profile.display_name || profile.username).join(", ") || "Group conversation"
