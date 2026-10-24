@@ -100,66 +100,6 @@ const DEFAULT_PREFERENCES = Object.freeze({
   staticAnimatedAvatars: true
 });
 
-const LEAN_STYLES = [
-  /* Optional navigation destinations. Scoped to the toggle so it is reversible. */
-  'html.sweetcord-lean-mode #app-mount a[href="/store"],',
-  'html.sweetcord-lean-mode #app-mount a[href^="/store/"],',
-  'html.sweetcord-lean-mode #app-mount a[href="/shop"],',
-  'html.sweetcord-lean-mode #app-mount a[href^="/shop/"],',
-  'html.sweetcord-lean-mode #app-mount a[href="/quests"],',
-  'html.sweetcord-lean-mode #app-mount a[href^="/quests/"],',
-  'html.sweetcord-lean-mode #app-mount a[href="/quest-home"],',
-  'html.sweetcord-lean-mode #app-mount a[href^="/quest-home/"],',
-  'html.sweetcord-lean-mode #app-mount a[href="/nitro"],',
-  'html.sweetcord-lean-mode #app-mount a[href^="/nitro/"],',
-  'html.sweetcord-lean-mode #app-mount a[href="/discovery"],',
-  'html.sweetcord-lean-mode #app-mount a[href^="/discovery/"],',
-  'html.sweetcord-lean-mode #app-mount a[href="/guild-discovery"],',
-  'html.sweetcord-lean-mode #app-mount a[href^="/guild-discovery/"],',
-  'html.sweetcord-lean-mode #app-mount [data-list-item-id^="shop" i],',
-  'html.sweetcord-lean-mode #app-mount [data-list-item-id^="quests" i],',
-  'html.sweetcord-lean-mode #app-mount [data-list-item-id^="nitro" i],',
-  'html.sweetcord-lean-mode #app-mount [data-list-item-id^="store" i],',
-  'html.sweetcord-lean-mode #app-mount [role="listitem"]:has(> a[href="/store"]),',
-  'html.sweetcord-lean-mode #app-mount [role="listitem"]:has(> a[href="/shop"]),',
-  'html.sweetcord-lean-mode #app-mount [role="listitem"]:has(> a[href="/quests"]),',
-  'html.sweetcord-lean-mode #app-mount [role="listitem"]:has(> a[href="/quest-home"]),',
-  'html.sweetcord-lean-mode #app-mount [role="listitem"]:has(> a[href="/nitro"]),',
-  'html.sweetcord-lean-mode #app-mount [role="listitem"]:has(> a[href="/discovery"]),',
-  'html.sweetcord-lean-mode #app-mount [role="listitem"]:has(> a[href="/guild-discovery"])',
-  '{ display: none !important; }',
-
-  /* Promotion cards: narrowly target known UI naming conventions. */
-  'html.sweetcord-lean-mode #app-mount [class*="promo" i],',
-  'html.sweetcord-lean-mode #app-mount [class*="nitroUpsell" i],',
-  'html.sweetcord-lean-mode #app-mount [class*="premiumPromo" i],',
-  'html.sweetcord-lean-mode #app-mount [class*="questHome" i],',
-  'html.sweetcord-lean-mode #app-mount [class*="questCard" i],',
-  'html.sweetcord-lean-mode #app-mount [class*="shopUpsell" i],',
-  'html.sweetcord-lean-mode #app-mount [class*="nitroBanner" i]',
-  '{ display: none !important; }',
-
-  /* Avoid expensive blur/compositing on decorative surfaces. */
-  'html.sweetcord-lean-mode #app-mount [class*="backdrop" i],',
-  'html.sweetcord-lean-mode #app-mount [class*="blur" i]',
-  '{ -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }',
-
-  /* Disable decorative hover/entrance motion, but do not hide call or media controls. */
-  'html.sweetcord-reduced-motion #app-mount *,',
-  'html.sweetcord-reduced-motion #app-mount *::before,',
-  'html.sweetcord-reduced-motion #app-mount *::after',
-  '{ animation: none !important; transition: none !important; scroll-behavior: auto !important; }',
-
-  /* Preserve real user avatars by default; trim only paid/decorative profile layers. */
-  'html.sweetcord-trim-profile-decorations #app-mount [class*="profileBanner" i],',
-  'html.sweetcord-trim-profile-decorations #app-mount [class*="profileEffect" i],',
-  'html.sweetcord-trim-profile-decorations #app-mount [class*="profileEffects" i],',
-  'html.sweetcord-trim-profile-decorations #app-mount [class*="avatarDecoration" i],',
-  'html.sweetcord-trim-profile-decorations #app-mount [class*="profileDecoration" i],',
-  'html.sweetcord-trim-profile-decorations #app-mount [class*="profilePremium" i]',
-  '{ display: none !important; }'
-].join("\n");
-
 let preferences = { ...DEFAULT_PREFERENCES };
 let leanModeEnabled = DEFAULT_PREFERENCES.leanMode;
 let reduceMotionEnabled = DEFAULT_PREFERENCES.reduceMotion;
