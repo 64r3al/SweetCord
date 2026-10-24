@@ -2,6 +2,9 @@
 
 **SweetCord** is an independent, lightweight gaming chat project: direct messages, group chats, private spaces, community servers, and text channels—built around a simple interface and a low-overhead design.
 
+
+> **Want the downloadable Windows desktop app?** [Get the latest SweetCord Desktop preview](https://github.com/64r3al/SweetCord/releases/tag/nightly). Install it like a normal Windows app; no Node.js or terminal is needed. This is an early preview and the resource savings are not yet benchmarked.
+
 > SweetCord is not affiliated with or endorsed by Discord. Discord sign-in redirects to Discord's official OAuth page; SweetCord never asks for or stores a Discord account password or user token.
 
 ## Discord-backed desktop experiment
