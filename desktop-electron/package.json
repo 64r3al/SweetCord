@@ -7,7 +7,8 @@
   "scripts": {
     "start": "electron .",
     "package:win": "electron-builder --win nsis",
-    "prepare:electron": "install-electron --no"
+    "prepare:electron": "install-electron --no",
+    "test": "node --test"
   },
   "devDependencies": {
     "electron": "45.0.0",
@@ -21,6 +22,7 @@
     },
     "files": [
       "main.cjs",
+      "lean-mode.cjs",
       "package.json"
     ],
     "artifactName": "${productName}-Setup-${version}.${ext}",
