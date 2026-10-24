@@ -8,6 +8,8 @@ const {
   session,
   shell
 } = require("electron");
+const { existsSync, readFileSync, writeFileSync } = require("node:fs");
+const path = require("node:path");
 const DISCORD_START_URL = "https://discord.com/app";
 const DISCORD_HOSTS = ["discord.com", "discord.gg", "discordapp.com", "discordapp.net"];
 const OAUTH_HOSTS = [
@@ -90,6 +92,109 @@ function attachNavigationPolicy(window) {
   });
 }
 
+const LEAN_STYLE_ID = "sweetcord-lean-mode-style";
+const LEAN_STYLES = [
+  /* Navigation destinations that primarily promote optional purchases/discovery. */
+  '#app-mount a[href="/store"],',
+  '#app-mount a[href^="/store/"],',
+  '#app-mount a[href="/shop"],',
+  '#app-mount a[href^="/shop/"],',
+  '#app-mount a[href="/quests"],',
+  '#app-mount a[href^="/quests/"],',
+  '#app-mount a[href="/quest-home"],',
+  '#app-mount a[href^="/quest-home/"],',
+  '#app-mount a[href="/nitro"],',
+  '#app-mount a[href^="/nitro/"],',
+  '#app-mount a[href="/discovery"],',
+  '#app-mount a[href^="/discovery/"],',
+  '#app-mount a[href="/guild-discovery"],',
+  '#app-mount a[href^="/guild-discovery/"],',
+  '#app-mount [data-list-item-id*="shop" i],',
+  '#app-mount [data-list-item-id*="quest" i],',
+  '#app-mount [data-list-item-id*="nitro" i],',
+  '#app-mount [data-list-item-id*="store" i],',
+  '#app-mount [role="listitem"]:has(> a[href="/store"]),',
+  '#app-mount [role="listitem"]:has(> a[href="/shop"]),',
+  '#app-mount [role="listitem"]:has(> a[href="/quests"]),',
+  '#app-mount [role="listitem"]:has(> a[href="/quest-home"]),',
+  '#app-mount [role="listitem"]:has(> a[href="/nitro"]),',
+  '#app-mount [role="listitem"]:has(> a[href="/discovery"]),',
+  '#app-mount [role="listitem"]:has(> a[href="/guild-discovery"])',
+  '{ display: none !important; }',
+  /* Reduce visual work without turning off hardware acceleration or video. */
+  'html.sweetcord-lean-mode #app-mount *,',
+  'html.sweetcord-lean-mode #app-mount *::before,',
+  'html.sweetcord-lean-mode #app-mount *::after',
+  '{ scroll-behavior: auto !important; transition-duration: 80ms !important; transition-delay: 0ms !important; }',
+  'html.sweetcord-lean-mode #app-mount [class*="promo" i],',
+  'html.sweetcord-lean-mode #app-mount [class*="nitroUpsell" i],',
+  'html.sweetcord-lean-mode #app-mount [class*="premiumPromo" i],',
+  'html.sweetcord-lean-mode #app-mount [class*="questHome" i],',
+  'html.sweetcord-lean-mode #app-mount [class*="shopUpsell" i]',
+  '{ display: none !important; }',
+  'html.sweetcord-lean-mode #app-mount [class*="backdrop" i],',
+  'html.sweetcord-lean-mode #app-mount [class*="blur" i]',
+  '{ -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }'
+].join("\n");
+
+let leanModeEnabled = true;
+
+function getPreferencesPath() {
+  return path.join(app.getPath("userData"), "sweetcord-preferences.json");
+}
+
+function loadPreferences() {
+  try {
+    const file = getPreferencesPath();
+    if (!existsSync(file)) return { leanMode: true };
+    const raw = JSON.parse(readFileSync(file, "utf8"));
+    return { leanMode: raw && typeof raw.leanMode === "boolean" ? raw.leanMode : true };
+  } catch {
+    return { leanMode: true };
+  }
+}
+
+function savePreferences() {
+  try {
+    writeFileSync(getPreferencesPath(), JSON.stringify({ leanMode: leanModeEnabled }, null, 2), { mode: 0o600 });
+  } catch {
+    // The application remains usable if saving this optional preference fails.
+  }
+}
+
+function applyLeanMode(window) {
+  if (!window || window.isDestroyed() || window.webContents.isDestroyed()) return;
+  const enabled = leanModeEnabled;
+  const styleId = LEAN_STYLE_ID;
+  const css = LEAN_STYLES;
+  const script = "(() => {"
+    + "const id = " + JSON.stringify(styleId) + ";"
+    + "let style = document.getElementById(id);"
+    + "if (" + String(enabled) + ") {"
+    + "if (!style) { style = document.createElement('style'); style.id = id; (document.head || document.documentElement).appendChild(style); }"
+    + "style.textContent = " + JSON.stringify(css) + ";"
+    + "document.documentElement.classList.add('sweetcord-lean-mode');"
+    + "} else { if (style) style.remove(); document.documentElement.classList.remove('sweetcord-lean-mode'); }"
+    + "})();";
+  window.webContents.executeJavaScript(script, true).catch(() => {
+    // During redirects or early document teardown the next page load will reapply it.
+  });
+}
+
+function installLeanModeHooks(window) {
+  const apply = () => applyLeanMode(window);
+  window.webContents.on("dom-ready", apply);
+  window.webContents.on("did-finish-load", apply);
+  window.webContents.on("did-navigate-in-page", apply);
+}
+
+function setLeanMode(enabled) {
+  leanModeEnabled = Boolean(enabled);
+  savePreferences();
+  makeMenu();
+  applyLeanMode(mainWindow);
+}
+
 function makeMenu() {
   const viewMenu = [
     { role: "reload", label: "Reload Discord" },
@@ -138,6 +243,21 @@ function makeMenu() {
       ]
     },
     { label: "View", submenu: viewMenu },
+    {
+      label: "Performance",
+      submenu: [
+        {
+          type: "checkbox",
+          label: "Lean interface (hide promos, reduce effects)",
+          checked: leanModeEnabled,
+          click: (item) => setLeanMode(item.checked)
+        },
+        {
+          label: "Reload to apply interface changes",
+          click: () => mainWindow?.reload()
+        }
+      ]
+    },
     {
       label: "Help",
       submenu: [
@@ -229,6 +349,7 @@ function createMainWindow(discordSession) {
   });
 
   attachNavigationPolicy(window);
+  installLeanModeHooks(window);
 
   window.webContents.on("did-fail-load", async (_event, errorCode, errorDescription, validatedURL, isMainFrame) => {
     if (!isMainFrame || errorCode === -3 || networkErrorPromptOpen || window.isDestroyed()) return;
@@ -259,6 +380,8 @@ function createMainWindow(discordSession) {
 }
 
 app.whenReady().then(() => {
+  leanModeEnabled = loadPreferences().leanMode;
+
   // Discord's website owns authentication and session data. The persistent
   // partition keeps its normal web session between launches; no token field
   // or token-export API is added by SweetCord.
