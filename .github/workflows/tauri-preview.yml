@@ -54,8 +54,7 @@ jobs:
           $null = Get-Content desktop-tauri/src-tauri/tauri.conf.json -Raw | ConvertFrom-Json
           $null = Get-Content desktop-tauri/package.json -Raw | ConvertFrom-Json
 
-      - name: Build experimental Windows installer
-        run: npm run tauri:build --prefix desktop-tauri
+      - name: Test Tauri URL allowlist\n        run: cargo test --manifest-path desktop-tauri/src-tauri/Cargo.toml\n\n      - name: Build experimental Windows installer\n        run: npm run tauri:build --prefix desktop-tauri
 
       - name: Upload experimental installer
         uses: actions/upload-artifact@v4
