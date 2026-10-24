@@ -1090,3 +1090,206 @@ button, a {
     scroll-behavior: auto !important;
   }
 }
+
+
+/* Lightweight Discord authorization and profile-verification screen. */
+.auth-progress-shell {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.auth-progress-topbar {
+  position: relative;
+  z-index: 2;
+}
+
+.auth-progress-card {
+  position: relative;
+  z-index: 1;
+  width: min(100% - 36px, 520px);
+  margin: clamp(42px, 9vh, 100px) auto auto;
+  padding: clamp(24px, 4vw, 38px);
+  border: 1px solid rgba(255,255,255,.085);
+  border-radius: 22px;
+  background: linear-gradient(145deg, rgba(24,25,35,.98), rgba(16,17,24,.98));
+  box-shadow: 0 22px 72px rgba(0,0,0,.24), inset 0 1px rgba(255,255,255,.035);
+}
+
+.auth-progress-symbol {
+  width: 54px;
+  height: 54px;
+  display: grid;
+  place-items: center;
+  margin-bottom: 25px;
+  border: 1px solid rgba(167,145,255,.2);
+  border-radius: 17px;
+  background: rgba(136,109,234,.095);
+}
+
+.auth-progress-spinner {
+  width: 24px;
+  height: 24px;
+  border: 2px solid rgba(194,180,255,.2);
+  border-top-color: #c1b0ff;
+  border-right-color: #8c73ef;
+  border-radius: 50%;
+  animation: sweetcord-auth-spin .85s linear infinite;
+}
+
+.auth-progress-card h1 {
+  margin: 13px 0 10px;
+  color: #f4f2fb;
+  font-size: clamp(25px, 4vw, 31px);
+  line-height: 1.13;
+  letter-spacing: -.9px;
+}
+
+.auth-progress-subtitle {
+  max-width: 420px;
+  margin: 0;
+  color: #a7a4b5;
+  font-size: 13px;
+  line-height: 1.8;
+}
+
+.auth-progress-steps {
+  display: grid;
+  gap: 4px;
+  margin-top: 28px;
+}
+
+.auth-progress-step {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 13px;
+  padding: 13px 12px;
+  border: 1px solid transparent;
+  border-radius: 13px;
+  color: #8e8c9d;
+}
+
+.auth-progress-step.is-active {
+  border-color: rgba(162,140,255,.15);
+  background: rgba(141,117,241,.075);
+  color: #eeebfa;
+}
+
+.auth-progress-step.is-complete {
+  color: #d6d0ed;
+}
+
+.auth-progress-step-marker {
+  flex: 0 0 28px;
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(255,255,255,.11);
+  border-radius: 9px;
+  color: #aaa6ba;
+  font-size: 10px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.auth-progress-step.is-active .auth-progress-step-marker {
+  border-color: rgba(178,155,255,.4);
+  background: rgba(150,125,246,.13);
+  color: #d4c8ff;
+}
+
+.auth-progress-step.is-complete .auth-progress-step-marker {
+  border-color: rgba(143,214,178,.25);
+  background: rgba(107,190,147,.1);
+  color: #a7e0bd;
+}
+
+.auth-progress-step strong,
+.auth-progress-step small {
+  display: block;
+}
+
+.auth-progress-step strong {
+  padding-top: 1px;
+  font-size: 12px;
+  line-height: 1.5;
+  font-weight: 650;
+}
+
+.auth-progress-step small {
+  margin-top: 2px;
+  color: #8f8c9f;
+  font-size: 10px;
+  line-height: 1.6;
+}
+
+.auth-progress-step-pulse {
+  width: 6px;
+  height: 6px;
+  flex: 0 0 6px;
+  margin: 10px 2px 0 auto;
+  border-radius: 50%;
+  background: #a792ff;
+  box-shadow: 0 0 0 4px rgba(167,146,255,.1);
+  animation: sweetcord-auth-pulse 1.5s ease-in-out infinite;
+}
+
+.auth-progress-security {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(255,255,255,.065);
+  color: #8f8c9d;
+  font-size: 10px;
+  line-height: 1.7;
+}
+
+.auth-progress-security svg {
+  flex: 0 0 auto;
+  margin-top: 1px;
+  color: #a49aef;
+}
+
+.auth-progress-shell .page-footer {
+  margin-top: auto;
+}
+
+@keyframes sweetcord-auth-spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes sweetcord-auth-pulse {
+  50% { opacity: .48; }
+}
+
+@media (max-width: 600px) {
+  .auth-progress-topbar .topbar-note {
+    display: none;
+  }
+
+  .auth-progress-card {
+    margin-top: 36px;
+    padding: 24px 20px;
+  }
+
+  .auth-progress-shell .page-footer {
+    gap: 8px;
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .auth-progress-shell .footer-right {
+    font-size: 8px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .auth-progress-spinner,
+  .auth-progress-step-pulse {
+    animation: none;
+  }
+}
