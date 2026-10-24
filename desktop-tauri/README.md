@@ -11,7 +11,7 @@ This is a separate experimental Windows desktop shell. It does **not** replace t
 - Applies reduced-motion styling, hides common upsell destinations/decorative profile layers, and batches avatar handling through requestAnimationFrame.
 - Replaces animated **profile avatars** with PNG URLs when the CDN supports them, with a one-shot fallback to the original GIF on load failure. It deliberately does not rewrite message attachments, animated stickers, or call-media streams.
 - Keeps microphone, camera, display-capture, notifications, and autoplay permission requests on the browser's default permission flow for Discord HTTPS pages; other permission categories are denied.
-- Creates controlled popup windows only for trusted hosts used by the main shell.
+- The new-window handler checks the initial popup URL against the HTTPS allowlist. Non-allowlisted destinations open in the system browser. Trusted authentication popups currently use WebView2's default popup implementation to avoid a known Windows deadlock when creating a child window synchronously inside the callback; subsequent redirects inside those default popups are not independently filtered by SweetCord's main-window navigation handler, so this remains an experimental compatibility/security limitation.
 
 ## Build on Windows
 
