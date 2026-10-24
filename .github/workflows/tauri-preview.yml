@@ -54,6 +54,9 @@ jobs:
           $null = Get-Content desktop-tauri/src-tauri/tauri.conf.json -Raw | ConvertFrom-Json
           $null = Get-Content desktop-tauri/package.json -Raw | ConvertFrom-Json
 
+      - name: Generate Windows application icon
+        run: npm run tauri:icon --prefix desktop-tauri
+
       - name: Test Tauri URL allowlist
         run: cargo test --manifest-path desktop-tauri/src-tauri/Cargo.toml
 
