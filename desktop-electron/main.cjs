@@ -93,51 +93,78 @@ function attachNavigationPolicy(window) {
 }
 
 const LEAN_STYLE_ID = "sweetcord-lean-mode-style";
+const DEFAULT_PREFERENCES = Object.freeze({
+  leanMode: true,
+  reduceMotion: true,
+  hideProfileDecorations: true,
+  staticAnimatedAvatars: true
+});
+
 const LEAN_STYLES = [
-  /* Navigation destinations that primarily promote optional purchases/discovery. */
-  '#app-mount a[href="/store"],',
-  '#app-mount a[href^="/store/"],',
-  '#app-mount a[href="/shop"],',
-  '#app-mount a[href^="/shop/"],',
-  '#app-mount a[href="/quests"],',
-  '#app-mount a[href^="/quests/"],',
-  '#app-mount a[href="/quest-home"],',
-  '#app-mount a[href^="/quest-home/"],',
-  '#app-mount a[href="/nitro"],',
-  '#app-mount a[href^="/nitro/"],',
-  '#app-mount a[href="/discovery"],',
-  '#app-mount a[href^="/discovery/"],',
-  '#app-mount a[href="/guild-discovery"],',
-  '#app-mount a[href^="/guild-discovery/"],',
-  '#app-mount [data-list-item-id*="shop" i],',
-  '#app-mount [data-list-item-id*="quest" i],',
-  '#app-mount [data-list-item-id*="nitro" i],',
-  '#app-mount [data-list-item-id*="store" i],',
-  '#app-mount [role="listitem"]:has(> a[href="/store"]),',
-  '#app-mount [role="listitem"]:has(> a[href="/shop"]),',
-  '#app-mount [role="listitem"]:has(> a[href="/quests"]),',
-  '#app-mount [role="listitem"]:has(> a[href="/quest-home"]),',
-  '#app-mount [role="listitem"]:has(> a[href="/nitro"]),',
-  '#app-mount [role="listitem"]:has(> a[href="/discovery"]),',
-  '#app-mount [role="listitem"]:has(> a[href="/guild-discovery"])',
+  /* Optional navigation destinations. Scoped to the toggle so it is reversible. */
+  'html.sweetcord-lean-mode #app-mount a[href="/store"],',
+  'html.sweetcord-lean-mode #app-mount a[href^="/store/"],',
+  'html.sweetcord-lean-mode #app-mount a[href="/shop"],',
+  'html.sweetcord-lean-mode #app-mount a[href^="/shop/"],',
+  'html.sweetcord-lean-mode #app-mount a[href="/quests"],',
+  'html.sweetcord-lean-mode #app-mount a[href^="/quests/"],',
+  'html.sweetcord-lean-mode #app-mount a[href="/quest-home"],',
+  'html.sweetcord-lean-mode #app-mount a[href^="/quest-home/"],',
+  'html.sweetcord-lean-mode #app-mount a[href="/nitro"],',
+  'html.sweetcord-lean-mode #app-mount a[href^="/nitro/"],',
+  'html.sweetcord-lean-mode #app-mount a[href="/discovery"],',
+  'html.sweetcord-lean-mode #app-mount a[href^="/discovery/"],',
+  'html.sweetcord-lean-mode #app-mount a[href="/guild-discovery"],',
+  'html.sweetcord-lean-mode #app-mount a[href^="/guild-discovery/"],',
+  'html.sweetcord-lean-mode #app-mount [data-list-item-id*="shop" i],',
+  'html.sweetcord-lean-mode #app-mount [data-list-item-id*="quest" i],',
+  'html.sweetcord-lean-mode #app-mount [data-list-item-id*="nitro" i],',
+  'html.sweetcord-lean-mode #app-mount [data-list-item-id*="store" i],',
+  'html.sweetcord-lean-mode #app-mount [role="listitem"]:has(> a[href="/store"]),',
+  'html.sweetcord-lean-mode #app-mount [role="listitem"]:has(> a[href="/shop"]),',
+  'html.sweetcord-lean-mode #app-mount [role="listitem"]:has(> a[href="/quests"]),',
+  'html.sweetcord-lean-mode #app-mount [role="listitem"]:has(> a[href="/quest-home"]),',
+  'html.sweetcord-lean-mode #app-mount [role="listitem"]:has(> a[href="/nitro"]),',
+  'html.sweetcord-lean-mode #app-mount [role="listitem"]:has(> a[href="/discovery"]),',
+  'html.sweetcord-lean-mode #app-mount [role="listitem"]:has(> a[href="/guild-discovery"])',
   '{ display: none !important; }',
-  /* Reduce visual work without turning off hardware acceleration or video. */
-  'html.sweetcord-lean-mode #app-mount *,',
-  'html.sweetcord-lean-mode #app-mount *::before,',
-  'html.sweetcord-lean-mode #app-mount *::after',
-  '{ scroll-behavior: auto !important; transition-duration: 80ms !important; transition-delay: 0ms !important; }',
+
+  /* Promotion cards: narrowly target known UI naming conventions. */
   'html.sweetcord-lean-mode #app-mount [class*="promo" i],',
   'html.sweetcord-lean-mode #app-mount [class*="nitroUpsell" i],',
   'html.sweetcord-lean-mode #app-mount [class*="premiumPromo" i],',
   'html.sweetcord-lean-mode #app-mount [class*="questHome" i],',
-  'html.sweetcord-lean-mode #app-mount [class*="shopUpsell" i]',
+  'html.sweetcord-lean-mode #app-mount [class*="questCard" i],',
+  'html.sweetcord-lean-mode #app-mount [class*="shopUpsell" i],',
+  'html.sweetcord-lean-mode #app-mount [class*="nitroBanner" i]',
   '{ display: none !important; }',
+
+  /* Avoid expensive blur/compositing on decorative surfaces. */
   'html.sweetcord-lean-mode #app-mount [class*="backdrop" i],',
-  'html.sweetcord-lean-mode #app-mount [class*="blur" i]',
-  '{ -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }'
+  'html.sweetcord-lean-mode #app-mount [class*="blur" i]'
+  '{ -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }',
+
+  /* Disable decorative hover/entrance motion, but do not hide call or media controls. */
+  'html.sweetcord-reduced-motion #app-mount *,',
+  'html.sweetcord-reduced-motion #app-mount *::before,',
+  'html.sweetcord-reduced-motion #app-mount *::after',
+  '{ animation: none !important; transition: none !important; scroll-behavior: auto !important; }',
+
+  /* Preserve real user avatars by default; trim only paid/decorative profile layers. */
+  'html.sweetcord-trim-profile-decorations #app-mount [class*="profileBanner" i],',
+  'html.sweetcord-trim-profile-decorations #app-mount [class*="profileEffect" i],',
+  'html.sweetcord-trim-profile-decorations #app-mount [class*="profileEffects" i],',
+  'html.sweetcord-trim-profile-decorations #app-mount [class*="avatarDecoration" i],',
+  'html.sweetcord-trim-profile-decorations #app-mount [class*="profileDecoration" i],',
+  'html.sweetcord-trim-profile-decorations #app-mount [class*="profilePremium" i]'
+  '{ display: none !important; }'
 ].join("\n");
 
-let leanModeEnabled = true;
+let preferences = { ...DEFAULT_PREFERENCES };
+let leanModeEnabled = DEFAULT_PREFERENCES.leanMode;
+let reduceMotionEnabled = DEFAULT_PREFERENCES.reduceMotion;
+let hideProfileDecorationsEnabled = DEFAULT_PREFERENCES.hideProfileDecorations;
+let staticAnimatedAvatarsEnabled = DEFAULT_PREFERENCES.staticAnimatedAvatars;
 
 function getPreferencesPath() {
   return path.join(app.getPath("userData"), "sweetcord-preferences.json");
@@ -146,38 +173,85 @@ function getPreferencesPath() {
 function loadPreferences() {
   try {
     const file = getPreferencesPath();
-    if (!existsSync(file)) return { leanMode: true };
+    if (!existsSync(file)) return { ...DEFAULT_PREFERENCES };
     const raw = JSON.parse(readFileSync(file, "utf8"));
-    return { leanMode: raw && typeof raw.leanMode === "boolean" ? raw.leanMode : true };
+    return Object.fromEntries(Object.entries(DEFAULT_PREFERENCES).map(([key, fallback]) => [
+      key,
+      raw && typeof raw[key] === "boolean" ? raw[key] : fallback
+    ]));
   } catch {
-    return { leanMode: true };
+    return { ...DEFAULT_PREFERENCES };
   }
 }
 
 function savePreferences() {
   try {
-    writeFileSync(getPreferencesPath(), JSON.stringify({ leanMode: leanModeEnabled }, null, 2), { mode: 0o600 });
+    writeFileSync(getPreferencesPath(), JSON.stringify(preferences, null, 2), { mode: 0o600 });
   } catch {
-    // The application remains usable if saving this optional preference fails.
+    // The app stays usable when optional local settings cannot be saved.
   }
 }
 
 function applyLeanMode(window) {
   if (!window || window.isDestroyed() || window.webContents.isDestroyed()) return;
-  const enabled = leanModeEnabled;
-  const styleId = LEAN_STYLE_ID;
-  const css = LEAN_STYLES;
+
+  const settings = {
+    leanMode: leanModeEnabled,
+    reduceMotion: reduceMotionEnabled,
+    hideProfileDecorations: hideProfileDecorationsEnabled,
+    staticAnimatedAvatars: staticAnimatedAvatarsEnabled
+  };
   const script = "(() => {"
-    + "const id = " + JSON.stringify(styleId) + ";"
+    + "const cfg = " + JSON.stringify(settings) + ";"
+    + "const id = " + JSON.stringify(LEAN_STYLE_ID) + ";"
+    + "const css = " + JSON.stringify(LEAN_STYLES) + ";"
     + "let style = document.getElementById(id);"
-    + "if (" + String(enabled) + ") {"
     + "if (!style) { style = document.createElement('style'); style.id = id; (document.head || document.documentElement).appendChild(style); }"
-    + "style.textContent = " + JSON.stringify(css) + ";"
-    + "document.documentElement.classList.add('sweetcord-lean-mode');"
-    + "} else { if (style) style.remove(); document.documentElement.classList.remove('sweetcord-lean-mode'); }"
+    + "style.textContent = css;"
+    + "const root = document.documentElement;"
+    + "root.classList.toggle('sweetcord-lean-mode', cfg.leanMode);"
+    + "root.classList.toggle('sweetcord-reduced-motion', cfg.reduceMotion);"
+    + "root.classList.toggle('sweetcord-trim-profile-decorations', cfg.hideProfileDecorations);"
+    + "root.classList.toggle('sweetcord-static-animated-avatars', cfg.staticAnimatedAvatars);"
+    + "const normalizeAvatar = (img) => {"
+    + "if (!(img instanceof HTMLImageElement)) return;"
+    + "const source = img.getAttribute('src') || '';"
+    + "const isAnimatedAvatar = /\\/avatars\\/[^/]+\\/a_[^/?#]+\\.gif(?:[?#]|$)/i.test(source);"
+    + "if (root.classList.contains('sweetcord-static-animated-avatars') && isAnimatedAvatar) {"
+    + "if (!img.hasAttribute('data-sweetcord-original-src')) img.setAttribute('data-sweetcord-original-src', source);"
+    + "if (!img.hasAttribute('data-sweetcord-original-srcset')) img.setAttribute('data-sweetcord-original-srcset', img.getAttribute('srcset') || '');"
+    + "img.removeAttribute('srcset');"
+    + "const stillSource = source.replace(/\\.gif(?=([?#]|$))/i, '.png');"
+    + "if (img.getAttribute('src') !== stillSource) img.setAttribute('src', stillSource);"
+    + "} else if (!root.classList.contains('sweetcord-static-animated-avatars') && img.hasAttribute('data-sweetcord-original-src')) {"
+    + "img.setAttribute('src', img.getAttribute('data-sweetcord-original-src'));"
+    + "const originalSrcset = img.getAttribute('data-sweetcord-original-srcset') || '';"
+    + "if (originalSrcset) img.setAttribute('srcset', originalSrcset); else img.removeAttribute('srcset');"
+    + "img.removeAttribute('data-sweetcord-original-src');"
+    + "img.removeAttribute('data-sweetcord-original-srcset');"
+    + "}"
+    + "};"
+    + "const processTree = (node) => {"
+    + "if (node instanceof HTMLImageElement) normalizeAvatar(node);"
+    + "if (node && node.querySelectorAll) node.querySelectorAll('img[src*=\"/avatars/\"]').forEach(normalizeAvatar);"
+    + "};"
+    + "if (!window.__sweetCordAvatarObserverInstalled) {"
+    + "processTree(document);"
+    + "const observer = new MutationObserver((records) => {"
+    + "for (const record of records) {"
+    + "if (record.type === 'attributes') { normalizeAvatar(record.target); continue; }"
+    + "for (const node of record.addedNodes) processTree(node);"
+    + "}"
+    + "});"
+    + "observer.observe(document.documentElement, { childList: true, subtree: true, attributes: true, attributeFilter: ['src'] });"
+    + "window.__sweetCordAvatarObserverInstalled = true;"
+    + "} else {"
+    + "document.querySelectorAll('img[src*=\"/avatars/\"], img[data-sweetcord-original-src]').forEach(normalizeAvatar);"
+    + "}"
     + "})();";
+
   window.webContents.executeJavaScript(script, true).catch(() => {
-    // During redirects or early document teardown the next page load will reapply it.
+    // Navigation may destroy the document during injection; the next load applies it again.
   });
 }
 
@@ -188,8 +262,15 @@ function installLeanModeHooks(window) {
   window.webContents.on("did-navigate-in-page", apply);
 }
 
-function setLeanMode(enabled) {
-  leanModeEnabled = Boolean(enabled);
+function setPreference(name, enabled) {
+  const key = String(name);
+  if (!Object.prototype.hasOwnProperty.call(DEFAULT_PREFERENCES, key)) return;
+
+  preferences[key] = Boolean(enabled);
+  leanModeEnabled = preferences.leanMode;
+  reduceMotionEnabled = preferences.reduceMotion;
+  hideProfileDecorationsEnabled = preferences.hideProfileDecorations;
+  staticAnimatedAvatarsEnabled = preferences.staticAnimatedAvatars;
   savePreferences();
   makeMenu();
   applyLeanMode(mainWindow);
@@ -248,10 +329,28 @@ function makeMenu() {
       submenu: [
         {
           type: "checkbox",
-          label: "Lean interface (hide promos, reduce effects)",
+          label: "Hide optional promos and navigation",
           accelerator: "CmdOrCtrl+Shift+M",
           checked: leanModeEnabled,
-          click: (item) => setLeanMode(item.checked)
+          click: (item) => setPreference("leanMode", item.checked)
+        },
+        {
+          type: "checkbox",
+          label: "Disable UI animations and transitions",
+          checked: reduceMotionEnabled,
+          click: (item) => setPreference("reduceMotion", item.checked)
+        },
+        {
+          type: "checkbox",
+          label: "Hide profile banners and decorations",
+          checked: hideProfileDecorationsEnabled,
+          click: (item) => setPreference("hideProfileDecorations", item.checked)
+        },
+        {
+          type: "checkbox",
+          label: "Use still profile avatars",
+          checked: staticAnimatedAvatarsEnabled,
+          click: (item) => setPreference("staticAnimatedAvatars", item.checked)
         },
         {
           label: "Reload to apply interface changes",
@@ -311,10 +410,10 @@ function installDiscordPermissions(discordSession) {
 function createMainWindow(discordSession) {
   const window = new BrowserWindow({
     title: "SweetCord",
-    width: 1280,
-    height: 800,
-    minWidth: 800,
-    minHeight: 520,
+    width: 1120,
+    height: 720,
+    minWidth: 760,
+    minHeight: 500,
     show: false,
     autoHideMenuBar: true,
     backgroundColor: "#111318",
@@ -325,7 +424,8 @@ function createMainWindow(discordSession) {
       sandbox: true,
       webSecurity: true,
       webviewTag: false,
-      spellcheck: true,
+      spellcheck: false,
+      devTools: !app.isPackaged,
       backgroundThrottling: true
     }
   });
@@ -381,7 +481,11 @@ function createMainWindow(discordSession) {
 }
 
 app.whenReady().then(() => {
-  leanModeEnabled = loadPreferences().leanMode;
+  preferences = loadPreferences();
+  leanModeEnabled = preferences.leanMode;
+  reduceMotionEnabled = preferences.reduceMotion;
+  hideProfileDecorationsEnabled = preferences.hideProfileDecorations;
+  staticAnimatedAvatarsEnabled = preferences.staticAnimatedAvatars;
 
   // Discord's website owns authentication and session data. The persistent
   // partition keeps its normal web session between launches; no token field
