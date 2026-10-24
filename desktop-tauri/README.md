@@ -17,17 +17,17 @@ This is a separate experimental Windows desktop shell. It does **not** replace t
 
 Install the current Rust stable toolchain, Visual Studio Build Tools with **Desktop development with C++**, Node.js LTS, and the Microsoft Edge WebView2 Runtime. WebView2 is included on supported Windows 10/11 systems, but the installer attempts to install it if missing.
 
-\`\`\`powershell
+```powershell
 cd desktop-tauri
 npm install
 npm run tauri:dev
-\`\`\`
+```
 
 Build a Windows NSIS installer:
 
-\`\`\`powershell
+```powershell
 npm run tauri:build
-\`\`\`
+```
 
 The installer is produced under src-tauri/target/release/bundle/nsis/. The repository's **SweetCord Tauri / WebView2 experiment** workflow also builds this installer on Windows and uploads it as a CI artifact. It is **not** published as the default nightly release until it passes real-device compatibility checks.
 
