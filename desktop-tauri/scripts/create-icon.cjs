@@ -7,12 +7,7 @@ const { spawnSync } = require("node:child_process");
 
 const projectRoot = path.resolve(__dirname, "..");
 const iconDirectory = path.join(projectRoot, "src-tauri", "icons");
-const cliPath = path.join(
-  projectRoot,
-  "node_modules",
-  ".bin",
-  process.platform === "win32" ? "tauri.cmd" : "tauri"
-);
+const cliScript = path.join(projectRoot, "node_modules", "@tauri-apps", "cli", "tauri.js");
 
 const sourceSvg = '<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256">\n'
   + '  <rect width="256" height="256" rx="56" fill="#111318"/>\n'
@@ -52,22 +47,24 @@ function validateWindowsIcon(buffer) {
   }
 }
 
-if (!fs.existsSync(cliPath)) {
-  throw new Error("Tauri CLI is missing. Run npm install in desktop-tauri first.");
+if (!fs.existsSync(cliScript)) {
+  throw new Error("Tauri CLI entry point is missing. Run npm install in desktop-tauri first.");
 }
 
 const tempDirectory = fs.mkdtempSync(path.join(os.tmpdir(), "sweetcord-icon-"));
 const sourcePath = path.join(tempDirectory, "sweetcord-icon.svg");
 try {
   fs.writeFileSync(sourcePath, sourceSvg, "utf8");
+  // Execute the CLI JavaScript entry point through Node rather than the Windows
+  // .cmd shim. This avoids shell quoting bugs when either path contains spaces.
   const result = spawnSync(
-    cliPath,
-    ["icon", sourcePath, "--output", iconDirectory],
+    process.execPath,
+    [cliScript, "icon", sourcePath, "--output", iconDirectory],
     {
       cwd: projectRoot,
       encoding: "utf8",
       stdio: "inherit",
-      shell: process.platform === "win32"
+      shell: false
     }
   );
   if (result.error) throw result.error;
