@@ -38,7 +38,12 @@ jobs:
           workspaces: desktop-tauri/src-tauri -> target
 
       - name: Check Tauri injected JavaScript syntax
-        run: node --check desktop-tauri/lean-mode.js
+        run: |
+          node --check desktop-tauri/lean-mode.js
+          node --check desktop-tauri/test/lean-mode.test.cjs
+
+      - name: Run Tauri lean-mode regression tests
+        run: node --test desktop-tauri/test/lean-mode.test.cjs
 
       - name: Set up Node.js
         uses: actions/setup-node@v7
