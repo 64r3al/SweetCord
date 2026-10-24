@@ -45,6 +45,62 @@ function BrandMark() {
   );
 }
 
+type AuthStage = "connecting" | "verifying";
+
+function AuthProgress({ stage }: { stage: AuthStage }) {
+  const verifying = stage === "verifying";
+  const steps = verifying
+    ? [
+        { title: "Authorization response received", description: "Discord returned control to SweetCord.", state: "complete" },
+        { title: "Confirming your profile", description: "Checking the basic identity details you authorized.", state: "active" },
+        { title: "Preparing your workspace", description: "Opening the next available SweetCord screen.", state: "pending" }
+      ]
+    : [
+        { title: "Opening Discord authorization", description: "Redirecting you to Discord's official sign-in page.", state: "active" },
+        { title: "Confirming your account", description: "Waiting for you to approve the requested access.", state: "pending" },
+        { title: "Returning to SweetCord", description: "Your browser will return here after authorization.", state: "pending" }
+      ];
+
+  return (
+    <main className="page-shell auth-progress-shell">
+      <div className="grid-overlay" />
+      <header className="topbar auth-progress-topbar">
+        <a className="wordmark" href="/" aria-label="SweetCord home">
+          <BrandMark /><span>sweet<span>cord</span></span>
+        </a>
+        <div className="topbar-note"><span className="topbar-pulse" /> LIGHTWEIGHT BY DESIGN</div>
+      </header>
+      <section className="auth-progress-card" aria-live="polite" aria-busy="true">
+        <div className="auth-progress-symbol"><span className="auth-progress-spinner" /></div>
+        <div className="eyebrow">{verifying ? "SECURE SIGN-IN" : "DISCORD CONNECTION"}</div>
+        <h1>{verifying ? "Confirming your account" : "Connecting to Discord"}</h1>
+        <p className="auth-progress-subtitle">
+          {verifying
+            ? "SweetCord is validating the sign-in response and checking the profile details you approved."
+            : "Complete the official Discord authorization, then you’ll return here automatically."}
+        </p>
+        <div className="auth-progress-steps">
+          {steps.map((step, index) => (
+            <div className={`auth-progress-step is-${step.state}`} key={step.title}>
+              <span className="auth-progress-step-marker">{step.state === "complete" ? "✓" : String(index + 1).padStart(2, "0")}</span>
+              <div><strong>{step.title}</strong><small>{step.description}</small></div>
+              {step.state === "active" && <span className="auth-progress-step-pulse" />}
+            </div>
+          ))}
+        </div>
+        <div className="auth-progress-security">
+          <ShieldCheck size={16} />
+          <span>SweetCord does not ask for your Discord password or personal user token. This sign-in confirms identity; private messages, server data, and voice require separate supported access.</span>
+        </div>
+      </section>
+      <footer className="page-footer">
+        <span>© {new Date().getFullYear()} SweetCord · Community-built</span>
+        <span className="footer-right">UNOFFICIAL PROJECT <span className="footer-dot">●</span> NOT AFFILIATED WITH DISCORD</span>
+      </footer>
+    </main>
+  );
+}
+
 function Avatar({ profile, demo = false }: { profile: DiscordProfile; demo?: boolean }) {
   const avatarUrl = demo ? null : getDiscordAvatarUrl(profile);
   const label = profile.global_name || profile.username;
@@ -152,6 +208,7 @@ export default function App() {
   const [confirmed, setConfirmed] = useState(false);
   const [demo, setDemo] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [authStage, setAuthStage] = useState<AuthStage>("connecting");
   const [notice, setNotice] = useState<Notice>(null);
   const [nativeAuthOpen, setNativeAuthOpen] = useState(false);
   const [nativeSession, setNativeSession] = useState<Session | null>(null);
@@ -194,6 +251,7 @@ export default function App() {
     if (!params.has("code") && !params.has("error")) return;
     callbackHandled.current = true;
 
+    setAuthStage("verifying");
     setBusy(true);
     completeDiscordOAuth()
       .then((returnedProfile) => {
@@ -223,6 +281,7 @@ export default function App() {
 
   const handleDiscordLogin = async () => {
     setNotice(null);
+    setAuthStage("connecting");
     setBusy(true);
     try {
       if (supabase) {
@@ -267,6 +326,10 @@ export default function App() {
 
   if (nativeSession) {
     return <ChatHub session={nativeSession} onSignOut={() => setNativeSession(null)} />;
+  }
+
+  if (busy) {
+    return <AuthProgress stage={authStage} />;
   }
 
   if (profile && confirmed) {
