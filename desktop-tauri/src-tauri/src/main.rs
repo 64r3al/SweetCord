@@ -2,7 +2,7 @@
 
 use std::io;
 use tauri::webview::{
-    NewWindowResponse, PermissionKind, PermissionResponse, WebviewWindowBuilder,
+    NewWindowResponse, PermissionKind, PermissionResponse, Webview, WebviewWindowBuilder,
 };
 use tauri::{AppHandle, Url};
 
@@ -57,7 +57,7 @@ fn open_external(app: &AppHandle, url: &Url) {
     }
 }
 
-fn permission_response(webview: tauri::Webview<tauri::Wry>, kind: PermissionKind) -> PermissionResponse {
+fn permission_response(webview: Webview<tauri::Wry>, kind: PermissionKind) -> PermissionResponse {
     let trusted_origin = webview
         .url()
         .ok()
