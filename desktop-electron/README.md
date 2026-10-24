@@ -70,7 +70,19 @@ Avatar processing is batched and watches only child additions plus image src cha
 
 **Memory target reality:** 200 MB is not a safe promise when running Discord's full web client. The browser renderer, server list, avatars, messages, and active calls have their own costs; video calls can exceed the target. We need benchmark results from the target PC before quantifying savings. This profile primarily reduces decorations, motion, and some image animation; it cannot make Discord's underlying client intrinsically tiny.
 
-## Regression tests\n\nRun the built-in Node.js tests before packaging:\n\n```powershell\ncd desktop-electron\nnpm install\nnpm test\n```\n\nThe CI workflow runs these checks and JavaScript syntax validation before it creates the Windows installer. They validate the generated injection and fallback logic; they do not replace real-device testing of Discord login, voice, video or screen sharing.\n\n## Measuring performance on your PC
+## Regression tests
+
+Run the built-in Node.js tests before packaging:
+
+```powershell
+cd desktop-electron
+npm install
+npm test
+```
+
+The CI workflow runs these checks and JavaScript syntax validation before it creates the Windows installer. They validate the generated injection and fallback logic; they do not replace real-device testing of Discord login, voice, video or screen sharing.
+
+## Measuring performance on your PC
 
 Run the included PowerShell script from the repository root while the desktop clients are open:
 
