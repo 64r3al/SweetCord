@@ -8,8 +8,6 @@ const {
   session,
   shell
 } = require("electron");
-const path = require("node:path");
-
 const DISCORD_START_URL = "https://discord.com/app";
 const DISCORD_HOSTS = ["discord.com", "discord.gg", "discordapp.com", "discordapp.net"];
 const OAUTH_HOSTS = [
@@ -43,7 +41,7 @@ function isDiscordHost(hostname) {
 function isTrustedWebUrl(rawUrl) {
   try {
     const url = new URL(rawUrl);
-    if (url.protocol !== "https:" && url.protocol !== "http:") return false;
+    if (url.protocol !== "https:") return false;
     return isDiscordHost(url.hostname) || hostMatches(url.hostname, OAUTH_HOSTS);
   } catch {
     return false;
