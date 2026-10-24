@@ -10,7 +10,12 @@ This is a separate Electron desktop build that follows the broad wrapper archite
 - Allows microphone, camera/media, notification, and fullscreen permissions only for Discord HTTPS origins.
 - Opens ordinary external links in the system browser while allowing Discord and common identity-provider popups needed for sign-in.
 - Keeps Electron Node.js integration disabled in the Discord renderer, uses context isolation and sandboxing, and enables background throttling.
-- Includes keyboard shortcuts for reloading and opening Discord's sign-out page.
+- Includes keyboard shortcuts for reloading, switching lean mode, and opening Discord's sign-out page.
+- Starts in a compact 1120×720 window with background throttling enabled.
+- Keeps GPU acceleration and media permissions available for voice/video calls.
+- Makes packaged builds hide developer tools and disables webpage spellcheck to avoid extra work in the chat renderer.
+- Enables a configurable ultra-low-effects profile by default: optional promo navigation hidden, UI animation/transitions disabled, decorative profile banners/effects hidden, and animated avatars switched to their static PNG versions when Discord's CDN supports them.
+- Stores those four performance preferences locally; they can be changed from the **Performance** menu.
 
 ## Run on Windows
 
@@ -51,13 +56,19 @@ The installer is written to `desktop-electron/release/`.
 - Discord's own sign-in website handles credentials and session tokens in the Electron browser profile.
 - External links are restricted to HTTP(S)/mailto before opening in the system browser.
 
-## Lean interface mode
+## Ultra-low-effects profile
 
-The desktop shell now enables **Lean interface mode** by default. Open **Performance** in the app menu to toggle it. The setting is saved locally in SweetCord's own preferences file.
+The **Performance** menu contains independently reversible settings:
+- **Hide optional promos and navigation** — hides common Store, Shop, Quests, Nitro, and Discovery destinations, plus matching promotion cards.
+- **Disable UI animations and transitions** — removes most CSS animations/transitions in the Discord renderer.
+- **Hide profile banners and decorations** — hides decorative profile banner/effect/avatar-decoration layers while retaining real user avatars.
+- **Use still profile avatars** — attempts to load PNG versions of animated Discord avatar GIF URLs and restores the original source when disabled.
 
-It hides common navigation entries for optional destinations such as Store, Shop, Quests, Nitro and Discovery, removes a few promotion containers when their class names are recognizable, shortens transition timings, and removes backdrop blur effects. These selectors are best-effort and can stop matching when Discord changes its web UI; reload Discord after a UI update if needed. Use `Ctrl+Shift+M` to toggle this mode quickly (on macOS, use `Cmd+Shift+M`).
+All four options are enabled by default. Use `Ctrl+Shift+M` to toggle promo/navigation trimming quickly (on macOS, use `Cmd+Shift+M`). Preferences are saved locally under SweetCord's Electron user data folder.
 
-The mode deliberately does **not** turn off GPU acceleration or disable the microphone/camera/media permission path. Those can affect voice/video calls and screen sharing. Discord still controls its own rendering, messages, call implementation, and account features. This is a visual/resource-reduction pass, not proof of a specific RAM/CPU/GPU reduction, and it does not guarantee removal of every upsell/promotion.
+These tweaks are compatibility best-effort: Discord changes its selectors and CDN behavior without notice. If something essential looks wrong, disable a setting and reload. The shell keeps GPU acceleration, WebRTC, camera/microphone permissions, and the Discord messaging/call app intact. No private-user-token login or token export is added.
+
+**Memory target reality:** 200 MB is not a safe promise when running Discord's full web client. The browser renderer, server list, avatars, messages, and active calls have their own costs; video calls can exceed the target. We need benchmark results from the target PC before quantifying savings. This profile primarily reduces decorations, motion, and some image animation; it cannot make Discord's underlying client intrinsically tiny.
 
 ## Measuring performance on your PC
 
