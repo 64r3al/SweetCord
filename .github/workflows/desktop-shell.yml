@@ -39,10 +39,16 @@ jobs:
           cache-dependency-path: desktop-electron/package.json
 
       - name: Check JavaScript syntax
-        run: node --check desktop-electron/main.cjs
+        run: |
+          node --check desktop-electron/main.cjs
+          node --check desktop-electron/lean-mode.cjs
+          node --check desktop-electron/test/lean-mode.test.cjs
 
       - name: Install desktop dependencies
         run: npm install --prefix desktop-electron
+
+      - name: Run lean-mode regression tests
+        run: npm test --prefix desktop-electron
 
       - name: Build Windows installer
         run: npm run package:win --prefix desktop-electron
