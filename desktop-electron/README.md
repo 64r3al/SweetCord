@@ -45,8 +45,8 @@ The installer is written to `desktop-electron/release/`.
 
 - This is a desktop shell around Discord's actual website, not a new implementation of Discord's protocol or a custom chat backend. Discord controls which features are available to the signed-in account and web client.
 - It deliberately does not provide a field for pasting/exporting a Discord personal user token. Sign in through Discord itself.
-- This first shell does not yet remove Discord UI sections such as Nitro or Quests; fragile CSS selectors or client patches need a separate compatibility layer and can break when Discord updates.
-- It does not claim lower measured CPU/GPU/RAM usage yet. It uses a separate Electron runtime with background throttling enabled, but actual resource use must be benchmarked against Discord and Vesktop on the target PC.
+- A best-effort compatibility layer hides common Store, Shop, Quests, Nitro and Discovery destinations plus matching promotional cards. Discord can change selectors at any time, so some elements may remain or an overly broad selector may need to be corrected.
+- Resource use has not been measured against Discord or Vesktop on the target PC. The current change batches avatar handling with requestAnimationFrame and avoids repeating full-document avatar scans except when the static-avatar preference changes. This reduces our own observer work but does not guarantee lower total RAM/CPU/GPU use.
 - Third-party Discord client modifications may be against Discord's Terms of Service and can carry account risk. This project is unofficial and not affiliated with Discord.
 - This project does not copy Vesktop or Vencord source code. Vesktop is GPL-3.0-licensed; anyone adapting its code must comply with that license.
 
@@ -66,11 +66,11 @@ The **Performance** menu contains independently reversible settings:
 
 All four options are enabled by default. Use `Ctrl+Shift+M` to toggle promo/navigation trimming quickly (on macOS, use `Cmd+Shift+M`). Preferences are saved locally under SweetCord's Electron user data folder.
 
-These tweaks are compatibility best-effort: Discord changes its selectors and CDN behavior without notice. If something essential looks wrong, disable a setting and reload. The shell keeps GPU acceleration, WebRTC, camera/microphone permissions, and the Discord messaging/call app intact. No private-user-token login or token export is added.
+Avatar processing is batched and watches only child additions plus image src changes. Static avatar conversion has a one-shot fallback and records failed PNG conversions to avoid retry loops. These tweaks are compatibility best-effort: Discord changes its selectors and CDN behavior without notice. If something essential looks wrong, disable a setting and reload. The shell keeps GPU acceleration, WebRTC, camera/microphone permissions, and the Discord messaging/call app intact. No private-user-token login or token export is added.
 
 **Memory target reality:** 200 MB is not a safe promise when running Discord's full web client. The browser renderer, server list, avatars, messages, and active calls have their own costs; video calls can exceed the target. We need benchmark results from the target PC before quantifying savings. This profile primarily reduces decorations, motion, and some image animation; it cannot make Discord's underlying client intrinsically tiny.
 
-## Measuring performance on your PC
+## Regression tests\n\nRun the built-in Node.js tests before packaging:\n\n```powershell\ncd desktop-electron\nnpm install\nnpm test\n```\n\nThe CI workflow runs these checks and JavaScript syntax validation before it creates the Windows installer. They validate the generated injection and fallback logic; they do not replace real-device testing of Discord login, voice, video or screen sharing.\n\n## Measuring performance on your PC
 
 Run the included PowerShell script from the repository root while the desktop clients are open:
 
