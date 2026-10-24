@@ -103,6 +103,8 @@ export default function ChatHub({ session, onSignOut }: Props) {
   const bottomRef = useRef<HTMLDivElement>(null);
 
   const profileById = useMemo(() => new Map(profiles.map((profile) => [profile.id, profile])), [profiles]);
+  const profileByIdRef = useRef(profileById);
+  profileByIdRef.current = profileById;
   const activeWorkspace = useMemo(() => workspaces.find((workspace) => workspace.id === activeWorkspaceId) ?? null, [workspaces, activeWorkspaceId]);
   const activeChannel = useMemo(() => channels.find((channel) => channel.id === activeChannelId) ?? null, [channels, activeChannelId]);
   const activeConversation = useMemo(() => conversations.find((conversation) => conversation.id === activeConversationId) ?? null, [conversations, activeConversationId]);
@@ -264,7 +266,7 @@ export default function ChatHub({ session, onSignOut }: Props) {
 
           const withSender: Message = {
             ...incoming,
-            sender: profileById.get(incoming.sender_id)
+            sender: profileByIdRef.current.get(incoming.sender_id)
           };
           return [...current, withSender]
             .sort((a, b) => a.created_at.localeCompare(b.created_at))
@@ -274,7 +276,7 @@ export default function ChatHub({ session, onSignOut }: Props) {
       .subscribe();
 
     return () => { void supabase?.removeChannel(live); };
-  }, [activeChannelId, activeConversationId, loadMessages, profileById]);
+  }, [activeChannelId, activeConversationId, loadMessages]);
 
   useEffect(() => {
     // Jump immediately instead of animating a full message list on every update.
