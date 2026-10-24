@@ -6,7 +6,8 @@
   "main": "main.cjs",
   "scripts": {
     "start": "electron .",
-    "package:win": "electron-builder --win nsis"
+    "package:win": "electron-builder --win nsis",
+    "prepare:electron": "install-electron --no"
   },
   "devDependencies": {
     "electron": "45.0.0",
