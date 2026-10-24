@@ -63,7 +63,6 @@ function AuthProgress({ stage }: { stage: AuthStage }) {
 
   return (
     <main className="page-shell auth-progress-shell">
-      <div className="grid-overlay" />
       <header className="topbar auth-progress-topbar">
         <a className="wordmark" href="/" aria-label="SweetCord home">
           <BrandMark /><span>sweet<span>cord</span></span>
@@ -338,9 +337,6 @@ export default function App() {
 
   return (
     <main className="page-shell">
-      <div className="ambient ambient-one" />
-      <div className="ambient ambient-two" />
-      <div className="grid-overlay" />
       <header className="topbar">
         <a className="wordmark" href="/" aria-label="SweetCord home">
           <BrandMark /><span>sweet<span>cord</span></span>
