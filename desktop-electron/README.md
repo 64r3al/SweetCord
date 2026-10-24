@@ -58,3 +58,15 @@ The desktop shell now enables **Lean interface mode** by default. Open **Perform
 It hides common navigation entries for optional destinations such as Store, Shop, Quests, Nitro and Discovery, removes a few promotion containers when their class names are recognizable, shortens transition timings, and removes backdrop blur effects. These selectors are best-effort and can stop matching when Discord changes its web UI; reload Discord after a UI update if needed.
 
 The mode deliberately does **not** turn off GPU acceleration or disable the microphone/camera/media permission path. Those can affect voice/video calls and screen sharing. Discord still controls its own rendering, messages, call implementation, and account features. This is a visual/resource-reduction pass, not proof of a specific RAM/CPU/GPU reduction, and it does not guarantee removal of every upsell/promotion.
+
+## Measuring performance on your PC
+
+Run the included PowerShell script from the repository root while the desktop clients are open:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\desktop-electron\benchmark-windows.ps1 -ProcessName SweetCord,Discord,Vesktop -SampleSeconds 30
+```
+
+It reports summed Working Set, private memory, and average CPU use for matching process names. Repeat comparable 30-second samples with the same conditions: idle, text chat, and an active voice/video call. If you run the development shell rather than the packaged app, add `electron` to `-ProcessName`, but close unrelated Electron apps first.
+
+For GPU, use Windows Task Manager → Details, enable the **GPU** and **GPU engine** columns, and compare under the same test scenario. The script does not upload any data. Treat the results as local estimates, not a universal benchmark.
