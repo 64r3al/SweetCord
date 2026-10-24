@@ -59,7 +59,7 @@ fn open_external(app: &AppHandle, url: &Url) {
     }
 }
 
-fn permission_response(webview: &tauri::Webview<tauri::Wry>, kind: PermissionKind) -> PermissionResponse {
+fn permission_response(webview: tauri::Webview<tauri::Wry>, kind: PermissionKind) -> PermissionResponse {
     let trusted_origin = webview
         .url()
         .ok()
