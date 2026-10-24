@@ -1,5 +1,10 @@
 name: SweetCord desktop shell
 
+# A single writer prevents concurrent builds from racing on the mutable nightly tag/release asset.
+concurrency:
+  group: sweetcord-nightly-release
+  cancel-in-progress: false
+
 on:
   push:
     paths:
