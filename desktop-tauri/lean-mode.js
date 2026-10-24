@@ -40,6 +40,7 @@
     'html #app-mount *, html #app-mount *::before, html #app-mount *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }'
   ].join("\n");
 
+  const install = () => {
   const root = document.documentElement;
   if (!root) return;
   let style = document.getElementById(styleId);
@@ -129,5 +130,12 @@
     });
     observer.observe(document.documentElement, { childList: true, subtree: true, attributes: true, attributeFilter: ["src"] });
     window.__sweetCordTauriObserver = observer;
+  }
+  };
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", install, { once: true });
+  } else {
+    install();
   }
 })();
