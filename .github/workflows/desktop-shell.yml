@@ -9,11 +9,13 @@ on:
   push:
     paths:
       - "desktop-electron/**"
+      - "desktop-tauri/**"
       - "Launch SweetCord Desktop.bat"
       - ".github/workflows/desktop-shell.yml"
   pull_request:
     paths:
       - "desktop-electron/**"
+      - "desktop-tauri/**"
       - "Launch SweetCord Desktop.bat"
       - ".github/workflows/desktop-shell.yml"
   workflow_dispatch:
@@ -23,6 +25,7 @@ permissions:
 
 jobs:
   windows-package:
+    if: github.ref == 'refs/heads/main' || github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch'
     runs-on: windows-latest
     steps:
       - name: Check out source
@@ -71,7 +74,7 @@ jobs:
 
             Download the Windows installer below, run it, and sign in on Discord's official page.
 
-            This app wraps Discord's own web app in a SweetCord-branded Electron window. The optional promotional/navigation hiding is best-effort and may need updates as Discord changes its interface. CPU, RAM, and GPU savings have not yet been independently benchmarked across PCs.
+            This app wraps Discord's own web app in a SweetCord-branded Electron window. Its performance profile reduces decorative effects and batches avatar handling, but CSS/CDN tweaks are best-effort and may need updates as Discord changes. No fixed CPU, RAM, or GPU savings are guaranteed; compare locally on the same hardware.
 
             SweetCord is an unofficial third-party client and is not affiliated with Discord. Third-party client modifications may carry account and Terms of Service risks.
           prerelease: true
