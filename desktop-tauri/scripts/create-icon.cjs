@@ -3,11 +3,9 @@
 const fs = require("node:fs");
 const path = require("node:path");
 
-const embeddedIconBase64 = "AAABAAEAICAAAAAAIADVAAAAFgAAAIlQTkcNChoKAAAADUlIRFIAAAAgAAAAIAgGAAAAc3p69AAAAJxJREFUeJztl8ENgCAQBA9iBfq0BQqgE0qgJkqwEwqgE0qgH32YS04ixAeePna/EHZu78OaeVl3+lBT66D4ONTI5fQMgI192YYC8Ls1iJErKD4ON66VXbhAWE1zojNZuV7buasiS6Q3PUum8I8EAAAAAAAAAAAAAAAA4HKi7IKaqfya/yMBIr0U6mJi6nL6VjXj4brV7A5klFrltAmgpQNVtzajV+diEQAAAABJREFUeJgg==";
+const pngBase64 = "iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAABDklEQVR42mMUFJb4zzCAgIlhgMGoAwbcASyEFBR6PCdoSP8OSdqEADGWk6KOJAeQaii5jmCipmHk6GNEL4iwGYIvjklVT3IuIGQYJQmQqFxACFitfs5wEl0sGTVUjoVK0qYcsFr9nGJ1TLS2nJB6kh1w685zki3H5wiy0sACQ1T+9BzcCRPdUqvVz1HSBMWJkIGBgSFzCpoDVFATIL4QI6ouQPZRwnn8oUFxNuzfIYlRuCDz0bMcevCjhwZZBRG5hUv/DkkGNRVJyh1AjiPIdTQTNQylpDhmIdVw9GKW0rqA4iYZoUKJkDwjOf0CcktCbBUTEzUMoUQfE7V8Qq56itIAsY7Ap45xtG844h0AANm3YTlgESVxAAAAAElFTkSuQmCC";
 const iconPath = path.join(__dirname, "..", "src-tauri", "icons", "icon.ico");
-const sourceBytes = Buffer.from(embeddedIconBase64, "base64");
-const pngOffsetInSource = 22;
-const png = sourceBytes.subarray(pngOffsetInSource);
+const png = Buffer.from(pngBase64, "base64");
 
 function readUInt32BE(buffer, offset) {
   return buffer.readUInt32BE(offset);
@@ -56,28 +54,35 @@ function validatePng(buffer) {
 
 function buildIco(pngBytes) {
   const header = Buffer.alloc(22);
-  header.writeUInt16LE(0, 0); // reserved
-  header.writeUInt16LE(1, 2); // icon resource
-  header.writeUInt16LE(1, 4); // one image
-  header.writeUInt8(32, 6); // width
-  header.writeUInt8(32, 7); // height
-  header.writeUInt8(0, 8); // palette colors: 0 = no palette
-  header.writeUInt8(0, 9); // reserved
-  header.writeUInt16LE(1, 10); // color planes
-  header.writeUInt16LE(32, 12); // bits per pixel
-  header.writeUInt32LE(pngBytes.length, 14); // exact image data size
-  header.writeUInt32LE(header.length, 18); // image starts immediately after header
+  header.writeUInt16LE(0, 0);
+  header.writeUInt16LE(1, 2);
+  header.writeUInt16LE(1, 4);
+  header.writeUInt8(32, 6);
+  header.writeUInt8(32, 7);
+  header.writeUInt8(0, 8);
+  header.writeUInt8(0, 9);
+  header.writeUInt16LE(1, 10);
+  header.writeUInt16LE(32, 12);
+  header.writeUInt32LE(pngBytes.length, 14);
+  header.writeUInt32LE(header.length, 18);
   return Buffer.concat([header, pngBytes]);
 }
 
 validatePng(png);
 const iconBytes = buildIco(png);
-if (iconBytes.readUInt16LE(0) !== 0 || iconBytes.readUInt16LE(2) !== 1 || iconBytes.readUInt16LE(4) !== 1) {
-  throw new Error("Generated SweetCord icon has an invalid ICO header.");
+if (
+  iconBytes.readUInt16LE(0) !== 0 ||
+  iconBytes.readUInt16LE(2) !== 1 ||
+  iconBytes.readUInt16LE(4) !== 1 ||
+  iconBytes.readUInt16LE(10) !== 1 ||
+  iconBytes.readUInt16LE(12) !== 32 ||
+  iconBytes.readUInt32LE(14) !== png.length ||
+  iconBytes.readUInt32LE(18) !== 22 ||
+  !iconBytes.subarray(22).equals(png)
+) {
+  throw new Error("Generated SweetCord icon has an invalid ICO directory entry.");
 }
-if (iconBytes.readUInt32LE(14) !== png.length || iconBytes.readUInt32LE(18) !== 22) {
-  throw new Error("Generated SweetCord icon directory entry has invalid offsets.");
-}
+
 fs.mkdirSync(path.dirname(iconPath), { recursive: true });
 fs.writeFileSync(iconPath, iconBytes);
 console.log("Generated validated 32x32 SweetCord ICO: " + iconPath + " (" + iconBytes.length + " bytes).");
