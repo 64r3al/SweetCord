@@ -93,7 +93,6 @@ function attachNavigationPolicy(window) {
   });
 }
 
-const LEAN_STYLE_ID = "sweetcord-lean-mode-style";
 const DEFAULT_PREFERENCES = Object.freeze({
   leanMode: true,
   reduceMotion: true,
