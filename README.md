@@ -12,7 +12,8 @@
 The repository includes a stable-in-place **Electron desktop shell** and a separate experimental **Tauri/WebView2 shell**; both open Discord's own web app. This is the closest architecture match to the account-and-voice goal: Discord itself provides the signed-in user's servers, messages, and calls, instead of SweetCord rebuilding those systems.
 
 - Run it on Windows with [Launch SweetCord Desktop.bat](Launch%20SweetCord%20Desktop.bat).
-- Electron source, performance settings and regression tests: [desktop-electron/README.md](desktop-electron/README.md).\n- Experimental Tauri/WebView2 build and testing checklist: [desktop-tauri/README.md](desktop-tauri/README.md). The Tauri installer is built as a CI artifact and does not replace the Electron release.
+- Electron source, performance settings and regression tests: [desktop-electron/README.md](desktop-electron/README.md).
+- Experimental Tauri/WebView2 build and testing checklist: [desktop-tauri/README.md](desktop-tauri/README.md). The Tauri installer is built as a CI artifact and does not replace the Electron release.
 - Sign in only on Discord's official page; SweetCord does not offer a paste-token form.
 - The Electron shell has a configurable ultra-low-effects profile. Its avatar observer batches work and scans all avatars only when necessary; failed static-image conversions fall back without repeatedly retrying.
 - It keeps GPU acceleration and call/media permissions enabled. These changes are compatibility best-effort; no fixed RAM/CPU/GPU savings are claimed until measured on real PCs.
