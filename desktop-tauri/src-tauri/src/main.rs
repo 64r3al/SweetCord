@@ -117,17 +117,6 @@ fn main() {
                     }
                 })
                 .on_permission_request(permission_response)
-                    .build();
-
-                    match child {
-                        Ok(window) => NewWindowResponse::Create { window },
-                        Err(error) => {
-                            eprintln!("SweetCord could not create trusted popup: {error}");
-                            NewWindowResponse::Deny
-                        }
-                    }
-                })
-                .on_permission_request(permission_response)
                 .build()?;
 
             Ok(())
