@@ -116,10 +116,10 @@ const LEAN_STYLES = [
   'html.sweetcord-lean-mode #app-mount a[href^="/discovery/"],',
   'html.sweetcord-lean-mode #app-mount a[href="/guild-discovery"],',
   'html.sweetcord-lean-mode #app-mount a[href^="/guild-discovery/"],',
-  'html.sweetcord-lean-mode #app-mount [data-list-item-id*="shop" i],',
-  'html.sweetcord-lean-mode #app-mount [data-list-item-id*="quest" i],',
-  'html.sweetcord-lean-mode #app-mount [data-list-item-id*="nitro" i],',
-  'html.sweetcord-lean-mode #app-mount [data-list-item-id*="store" i],',
+  'html.sweetcord-lean-mode #app-mount [data-list-item-id^="shop" i],',
+  'html.sweetcord-lean-mode #app-mount [data-list-item-id^="quests" i],',
+  'html.sweetcord-lean-mode #app-mount [data-list-item-id^="nitro" i],',
+  'html.sweetcord-lean-mode #app-mount [data-list-item-id^="store" i],',
   'html.sweetcord-lean-mode #app-mount [role="listitem"]:has(> a[href="/store"]),',
   'html.sweetcord-lean-mode #app-mount [role="listitem"]:has(> a[href="/shop"]),',
   'html.sweetcord-lean-mode #app-mount [role="listitem"]:has(> a[href="/quests"]),',
@@ -222,7 +222,13 @@ function applyLeanMode(window) {
     + "if (!img.hasAttribute('data-sweetcord-original-srcset')) img.setAttribute('data-sweetcord-original-srcset', img.getAttribute('srcset') || '');"
     + "img.removeAttribute('srcset');"
     + "const stillSource = source.replace(/\\.gif(?=([?#]|$))/i, '.png');"
-    + "if (img.getAttribute('src') !== stillSource) img.setAttribute('src', stillSource);"
+    + "if (img.getAttribute('src') !== stillSource) {"
+    + "img.addEventListener('error', () => {"
+    + "const original = img.getAttribute('data-sweetcord-original-src');"
+    + "if (original) { img.setAttribute('src', original); const oldSet = img.getAttribute('data-sweetcord-original-srcset') || ''; if (oldSet) img.setAttribute('srcset', oldSet); else img.removeAttribute('srcset'); img.removeAttribute('data-sweetcord-original-src'); img.removeAttribute('data-sweetcord-original-srcset'); }"
+    + "}, { once: true });"
+    + "img.setAttribute('src', stillSource);"
+    + "}"
     + "} else if (!root.classList.contains('sweetcord-static-animated-avatars') && img.hasAttribute('data-sweetcord-original-src')) {"
     + "img.setAttribute('src', img.getAttribute('data-sweetcord-original-src'));"
     + "const originalSrcset = img.getAttribute('data-sweetcord-original-srcset') || '';"
