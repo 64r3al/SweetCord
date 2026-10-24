@@ -1,11 +1,10 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 use std::io;
-use std::sync::atomic::{AtomicU64, Ordering};
 use tauri::webview::{
     NewWindowResponse, PermissionKind, PermissionResponse, WebviewWindowBuilder,
 };
-use tauri::{AppHandle, Url, WebviewUrl};
+use tauri::{AppHandle, Url};
 
 const DISCORD_HOSTS: &[&str] = &[
     "discord.com",
@@ -25,7 +24,6 @@ const IDENTITY_HOSTS: &[&str] = &[
     "epicgames.com",
     "xbox.com",
 ];
-static POPUP_ID: AtomicU64 = AtomicU64::new(1);
 const LEAN_SCRIPT: &str = include_str!("../../lean-mode.js");
 
 fn host_matches(host: &str, domains: &[&str]) -> bool {
@@ -108,31 +106,17 @@ fn main() {
                         false
                     }
                 })
-                .on_new_window(move |url, features| {
-                    if !is_trusted_url(&url) {
+                .on_new_window(move |url, _features| {
+                    if is_trusted_url(&url) {
+                        // Use WebView2's default popup creation to avoid building a native
+                        // window synchronously inside its callback, which can deadlock on Windows.
+                        NewWindowResponse::Allow
+                    } else {
                         open_external(&popup_handle, &url);
-                        return NewWindowResponse::Deny;
+                        NewWindowResponse::Deny
                     }
-
-                    let label = format!("trusted-popup-{}", POPUP_ID.fetch_add(1, Ordering::Relaxed));
-                    let child_navigation_handle = popup_handle.clone();
-                    let child = WebviewWindowBuilder::new(
-                        &popup_handle,
-                        label,
-                        WebviewUrl::External(url.clone()),
-                    )
-                    .title("SweetCord")
-                    .window_features(features)
-                    .initialization_script(LEAN_SCRIPT)
-                    .on_navigation(move |next_url| {
-                        if is_trusted_url(next_url) {
-                            true
-                        } else {
-                            open_external(&child_navigation_handle, next_url);
-                            false
-                        }
-                    })
-                    .on_permission_request(permission_response)
+                })
+                .on_permission_request(permission_response)
                     .build();
 
                     match child {
