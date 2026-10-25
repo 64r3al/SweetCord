@@ -11,6 +11,7 @@ const {
 const { existsSync, readFileSync, writeFileSync } = require("node:fs");
 const path = require("node:path");
 const { buildLeanModeScript } = require("./lean-mode.cjs");
+const { shouldBlockHeavyResource } = require("./resource-policy.cjs");
 const DISCORD_START_URL = "https://discord.com/app";
 const DISCORD_HOSTS = ["discord.com", "discord.gg", "discordapp.com", "discordapp.net"];
 const OAUTH_HOSTS = [
@@ -97,7 +98,8 @@ const DEFAULT_PREFERENCES = Object.freeze({
   leanMode: true,
   reduceMotion: true,
   hideProfileDecorations: true,
-  staticAnimatedAvatars: true
+  staticAnimatedAvatars: true,
+  textOnlyMode: true
 });
 
 let preferences = { ...DEFAULT_PREFERENCES };
@@ -105,6 +107,7 @@ let leanModeEnabled = DEFAULT_PREFERENCES.leanMode;
 let reduceMotionEnabled = DEFAULT_PREFERENCES.reduceMotion;
 let hideProfileDecorationsEnabled = DEFAULT_PREFERENCES.hideProfileDecorations;
 let staticAnimatedAvatarsEnabled = DEFAULT_PREFERENCES.staticAnimatedAvatars;
+let textOnlyModeEnabled = DEFAULT_PREFERENCES.textOnlyMode;
 
 function getPreferencesPath() {
   return path.join(app.getPath("userData"), "sweetcord-preferences.json");
@@ -139,7 +142,8 @@ function applyLeanMode(window) {
     leanMode: leanModeEnabled,
     reduceMotion: reduceMotionEnabled,
     hideProfileDecorations: hideProfileDecorationsEnabled,
-    staticAnimatedAvatars: staticAnimatedAvatarsEnabled
+    staticAnimatedAvatars: staticAnimatedAvatarsEnabled,
+    textOnlyMode: textOnlyModeEnabled
   };
   const script = buildLeanModeScript(settings);
 
@@ -163,9 +167,16 @@ function setPreference(name, enabled) {
   reduceMotionEnabled = preferences.reduceMotion;
   hideProfileDecorationsEnabled = preferences.hideProfileDecorations;
   staticAnimatedAvatarsEnabled = preferences.staticAnimatedAvatars;
+  textOnlyModeEnabled = preferences.textOnlyMode;
   savePreferences();
   makeMenu();
   applyLeanMode(mainWindow);
+  // Request interception takes effect immediately, but current images may already
+  // be cached in the renderer. Reloading guarantees the selected mode is applied
+  // before the next round of Discord UI assets is requested.
+  if (key === "textOnlyMode" && mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.reload();
+  }
 }
 
 function makeMenu() {
@@ -219,6 +230,13 @@ function makeMenu() {
     {
       label: "Performance",
       submenu: [
+        {
+          type: "checkbox",
+          label: "Text-only mode — block images, GIFs, stickers and media",
+          checked: textOnlyModeEnabled,
+          click: (item) => setPreference("textOnlyMode", item.checked)
+        },
+        { type: "separator" },
         {
           type: "checkbox",
           label: "Hide optional promos and navigation",
@@ -290,13 +308,33 @@ function installDiscordPermissions(discordSession) {
 
   discordSession.setPermissionRequestHandler((webContents, permission, callback, details) => {
     const origin = details && details.securityOrigin;
-    const allowed = ALLOWED_PERMISSION_NAMES.has(permission) && isDiscordOrigin(origin);
+    // Text-only mode is intentionally text-focused: no camera or microphone
+    // capture is allowed until the user disables the mode.
+    const allowed = ALLOWED_PERMISSION_NAMES.has(permission) &&
+      isDiscordOrigin(origin) &&
+      !(textOnlyModeEnabled && permission === "media");
     callback(allowed);
   });
 
   discordSession.setPermissionCheckHandler((webContents, permission, requestingOrigin) => {
-    return ALLOWED_PERMISSION_NAMES.has(permission) && isDiscordOrigin(requestingOrigin);
+    return ALLOWED_PERMISSION_NAMES.has(permission) &&
+      isDiscordOrigin(requestingOrigin) &&
+      !(textOnlyModeEnabled && permission === "media");
   });
+}
+
+function installTextOnlyResourceBlocking(discordSession) {
+  discordSession.webRequest.onBeforeRequest(
+    { urls: ["<all_urls>"], types: ["image", "media"] },
+    (details, callback) => {
+      const cancel = shouldBlockHeavyResource(details, {
+        enabled: textOnlyModeEnabled,
+        mainWebContentsId: mainWindow?.webContents.id,
+        currentUrl: mainWindow?.webContents.getURL()
+      });
+      callback({ cancel });
+    }
+  );
 }
 
 function createMainWindow(discordSession) {
@@ -378,12 +416,14 @@ app.whenReady().then(() => {
   reduceMotionEnabled = preferences.reduceMotion;
   hideProfileDecorationsEnabled = preferences.hideProfileDecorations;
   staticAnimatedAvatarsEnabled = preferences.staticAnimatedAvatars;
+  textOnlyModeEnabled = preferences.textOnlyMode;
 
   // Discord's website owns authentication and session data. The persistent
   // partition keeps its normal web session between launches; no token field
   // or token-export API is added by SweetCord.
   const discordSession = session.fromPartition("persist:sweetcord-discord");
   installDiscordPermissions(discordSession);
+  installTextOnlyResourceBlocking(discordSession);
   makeMenu();
   createMainWindow(discordSession);
 
