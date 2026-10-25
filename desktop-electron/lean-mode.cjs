@@ -81,7 +81,7 @@ const LEAN_STYLES = [
   'html.sweetcord-text-only-mode #app-mount button[aria-label*="nitro" i],',
   'html.sweetcord-text-only-mode #app-mount button[aria-label*="gift" i],',
   'html.sweetcord-text-only-mode #app-mount button[aria-label*="screen share" i],',
-  'html.sweetcord-text-only-mode #app-mount button[aria-label*="start video" i]'
+  'html.sweetcord-text-only-mode #app-mount button[aria-label*="start video" i]',
   '{ display: none !important; }',
 ].join("\n");
 
