@@ -88,7 +88,7 @@ fn should_block_resource(is_image: bool, is_media: bool, request_url: &str, curr
         Ok(url) => url,
         Err(_) => return false,
     };
-    if active.scheme() != "https:"
+    if active.scheme() != "https"
         || !active.host_str().map(is_discord_host).unwrap_or(false)
         || is_auth_path(active.path())
     {
