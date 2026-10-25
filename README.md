@@ -69,7 +69,7 @@ For a fair comparison, use the same Windows PC, account, network, window size, a
 From PowerShell in the repository root:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File .\\desktop-electron\\benchmark-windows.ps1 -ProcessName SweetCord,Discord,Vesktop -SampleSeconds 30
+powershell -ExecutionPolicy Bypass -File .\desktop-electron\benchmark-windows.ps1 -ProcessName SweetCord,Discord,Vesktop -SampleSeconds 30
 ```
 
 The script reports aggregate working set, private memory, and average CPU use for the process names selected. It does not upload or save your measurements. A process that exits during sampling or a child process with a different name can affect the comparison.
