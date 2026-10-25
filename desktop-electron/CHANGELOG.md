@@ -1,5 +1,17 @@
 # Changelog
 
+## v0.5.0 — Performance profiles and diagnostics (preview)
+
+- Add saved **Extreme Lite**, **Balanced**, and **Custom** performance profiles.
+- Keep Extreme Lite as the default; Balanced permits still images while blocking recognizable GIF/APNG/video assets, and Custom exposes the existing individual performance controls.
+- Preserve old preference files, including an explicit older choice to allow images.
+- Add regression tests for profile normalization and balanced media classification.
+- Replace the one-shot benchmark comparison with repeated CPU/memory sampling and median, peak, and P95 summaries; optionally export the samples to CSV.
+- Upgrade the in-app resource snapshot to sample process CPU and memory for five seconds when explicitly opened.
+- Add a Windows-only native WebView2 request-filtering experiment for image and clearly recognized visual-media resources.
+
+Known limits: no Windows hardware benchmark or live Discord call has been executed by the code-writing environment. Measurements must be collected on the target PC before publishing savings percentages. Ambiguous media URLs remain allowed to protect voice traffic; hardware counter availability varies by GPU driver. The Tauri interception experiment must pass its Windows CI and manual voice tests before it is recommended as the default.
+
 ## v0.4.0 — Ultra-Lite voice + text preview
 
 - Preserve microphone-only voice calls and keep voice-channel UI/audio elements available.
@@ -30,5 +42,5 @@ This is an experimental Windows preview focused on reducing Discord's image/medi
 
 - No hard 1 GiB total-memory ceiling is enforced. A hard limit could make Chromium's renderer or the entire app crash, and a JavaScript heap cap would not cap native or GPU memory.
 - The Discord web app and the Electron/Chromium processes still run. Text-only mode reduces image/media work but does not remove the cost of Discord's core web client.
-- Discord can change selectors, request types and UI structure without notice. Real-PC CPU/RAM/GPU results are required before claiming a performance improvement.
-- Voice/video-related UI and image/media displays are intentionally reduced. Turn off **Performance → Text-only mode** if the missing visuals or features matter more than the reduction.
+- Discord can change selectors, URLs, request types and UI structure without notice. Real-PC CPU/RAM/GPU results are required before claiming a performance improvement.
+- Video and screen-sharing UI and image/media displays are intentionally reduced in Extreme Lite. Balanced mode restores still images but is not equivalent to the maximum-reduction profile.
