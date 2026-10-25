@@ -52,13 +52,22 @@ test("disabling static avatars generates a reversible configuration", () => {
 });
 
 
-test("text-only mode hides high-cost media and exits before avatar observer setup", () => {
+test("Ultra-Lite hides visual media and leaves voice UI available", () => {
   const source = buildLeanModeScript(defaults);
   assert.match(source, /#app-mount img/);
   assert.ok(source.includes("gif"));
   assert.ok(source.includes("sticker"));
   assert.ok(source.includes("embed"));
+  assert.ok(source.includes("sweetcord-voice-only-mode"));
+  assert.ok(!source.includes("text-only-mode #app-mount audio"));
+  assert.ok(!source.includes('text-only-mode #app-mount [class*="voice" i]'));
   assert.ok(source.indexOf("if (cfg.textOnlyMode)") < source.indexOf("const avatarSelector"));
+});
+
+test("video and screen-share controls are hidden even with image mode off", () => {
+  const source = buildLeanModeScript({ ...defaults, textOnlyMode: false });
+  assert.ok(source.includes("sweetcord-voice-only-mode #app-mount video"));
+  assert.ok(source.includes("screenShare"));
 });
 
 test("missing preferences safely default to disabled values", () => {

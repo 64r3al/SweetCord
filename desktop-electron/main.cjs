@@ -12,6 +12,7 @@ const { existsSync, readFileSync, writeFileSync } = require("node:fs");
 const path = require("node:path");
 const { buildLeanModeScript } = require("./lean-mode.cjs");
 const { shouldBlockHeavyResource } = require("./resource-policy.cjs");
+const { isPermissionRequestAllowed, isPermissionCheckAllowed } = require("./permission-policy.cjs");
 const DISCORD_START_URL = "https://discord.com/app";
 const DISCORD_HOSTS = ["discord.com", "discord.gg", "discordapp.com", "discordapp.net"];
 const OAUTH_HOSTS = [
@@ -26,8 +27,6 @@ const OAUTH_HOSTS = [
   "epicgames.com",
   "xbox.com"
 ];
-const ALLOWED_PERMISSION_NAMES = new Set(["media", "notifications", "fullscreen"]);
-
 let mainWindow = null;
 let networkErrorPromptOpen = false;
 
@@ -232,7 +231,7 @@ function makeMenu() {
       submenu: [
         {
           type: "checkbox",
-          label: "Text-only mode — block images, GIFs, stickers and media",
+          label: "Ultra-Lite mode — block images and video (voice audio stays enabled)",
           checked: textOnlyModeEnabled,
           click: (item) => setPreference("textOnlyMode", item.checked)
         },
@@ -306,25 +305,13 @@ function getBrowserUserAgent() {
 }
 
 function installDiscordPermissions(discordSession) {
-  const isDiscordOrigin = (origin) => {
-    const parsed = parseUrl(origin);
-    return Boolean(parsed && parsed.protocol === "https:" && isDiscordHost(parsed.hostname));
-  };
-
   discordSession.setPermissionRequestHandler((webContents, permission, callback, details) => {
     const origin = details && details.securityOrigin;
-    // Text-only mode is intentionally text-focused: no camera or microphone
-    // capture is allowed until the user disables the mode.
-    const allowed = ALLOWED_PERMISSION_NAMES.has(permission) &&
-      isDiscordOrigin(origin) &&
-      !(textOnlyModeEnabled && permission === "media");
-    callback(allowed);
+    callback(isPermissionRequestAllowed(permission, origin, details || {}));
   });
 
-  discordSession.setPermissionCheckHandler((webContents, permission, requestingOrigin) => {
-    return ALLOWED_PERMISSION_NAMES.has(permission) &&
-      isDiscordOrigin(requestingOrigin) &&
-      !(textOnlyModeEnabled && permission === "media");
+  discordSession.setPermissionCheckHandler((webContents, permission, requestingOrigin, details) => {
+    return isPermissionCheckAllowed(permission, requestingOrigin, details || {});
   });
 }
 

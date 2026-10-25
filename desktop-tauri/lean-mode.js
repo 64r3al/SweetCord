@@ -35,6 +35,12 @@
     'html #app-mount [class*="avatarDecoration" i],',
     'html #app-mount [class*="profileDecoration" i],',
     'html #app-mount [class*="profilePremium" i] { display: none !important; }',
+    'html #app-mount video,',
+    'html #app-mount [class*="video" i],',
+    'html #app-mount [class*="screenShare" i],',
+    'html #app-mount button[aria-label*="camera" i],',
+    'html #app-mount button[aria-label*="video" i],',
+    'html #app-mount button[aria-label*="screen share" i] { display: none !important; }',
     'html #app-mount [class*="backdrop" i],',
     'html #app-mount [class*="blur" i] { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }',
     'html #app-mount *, html #app-mount *::before, html #app-mount *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }'

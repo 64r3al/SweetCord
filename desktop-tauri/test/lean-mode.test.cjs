@@ -16,6 +16,12 @@ test("Tauri performance injection only runs on Discord HTTPS hosts", () => {
   assert.match(source, /discord/);
 });
 
+test("Tauri preview hides video and screen-sharing controls", () => {
+  assert.ok(source.includes("#app-mount video"));
+  assert.ok(source.includes("screenShare"));
+  assert.ok(source.includes('button[aria-label*="camera"'));
+});
+
 test("Tauri avatar work is frame-batched and scoped to the app subtree", () => {
   assert.match(source, /requestAnimationFrame\(flush\)/);
   assert.match(source, /getElementById\("app-mount"\) \|\| root/);

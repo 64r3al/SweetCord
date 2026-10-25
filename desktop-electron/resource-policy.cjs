@@ -1,42 +1,45 @@
 "use strict";
 
-const HEAVY_RESOURCE_TYPES = new Set(["image", "media"]);
+const VISUAL_MEDIA_EXTENSIONS = new Set([
+  ".gif", ".gifv", ".mp4", ".m4v", ".mov", ".webm", ".ogv", ".avi", ".mkv", ".3gp", ".m3u8", ".mpd"
+]);
 const DISCORD_HOSTS = ["discord.com", "discord.gg", "discordapp.com", "discordapp.net"];
+const AUTH_PATH = /^\/(login|register|oauth2|verify|email-verification|reset-password|logout)(\/|$)/i;
 
 function hostMatches(hostname, candidates) {
   const normalized = String(hostname || "").toLowerCase();
   return candidates.some((domain) => normalized === domain || normalized.endsWith("." + domain));
 }
 
-/**
- * Decide whether a request is safe to cancel in the main Discord tab.
- *
- * Only image/media requests initiated by the main Discord WebContents are
- * blocked. Authentication popups and non-Discord pages are intentionally
- * excluded. Missing metadata fails open to avoid breaking unrelated requests.
- */
-function shouldBlockHeavyResource(details, options = {}) {
-  if (options.enabled !== true) return false;
-  if (!Number.isInteger(options.mainWebContentsId)) return false;
-  if (!details || details.webContentsId !== options.mainWebContentsId) return false;
-
-  const resourceType = String(details.resourceType || "").toLowerCase();
-  if (!HEAVY_RESOURCE_TYPES.has(resourceType)) return false;
-
+function isLikelyVisualMediaAsset(rawUrl) {
+  if (typeof rawUrl !== "string" || !rawUrl) return false;
   try {
-    const activeUrl = new URL(options.currentUrl);
-    if (activeUrl.protocol !== "https:" || !hostMatches(activeUrl.hostname, DISCORD_HOSTS)) {
-      return false;
-    }
-    // Keep login, OAuth, verification, and account recovery pages functional.
-    if (/^\/(login|register|oauth2|verify|email-verification|reset-password|logout)(\/|$)/i.test(activeUrl.pathname)) {
-      return false;
-    }
+    const pathname = new URL(rawUrl).pathname.toLowerCase();
+    const dot = pathname.lastIndexOf(".");
+    return dot >= 0 && VISUAL_MEDIA_EXTENSIONS.has(pathname.slice(dot));
   } catch {
     return false;
   }
+}
 
+/**
+ * Block images and clearly identifiable video/GIF assets in the main Discord window.
+ * Generic media URLs fail open because they can be audio-call related.
+ */
+function shouldBlockHeavyResource(details, options = {}) {
+  if (options.enabled !== true || !Number.isInteger(options.mainWebContentsId)) return false;
+  if (!details || details.webContentsId !== options.mainWebContentsId) return false;
+  const type = String(details.resourceType || "").toLowerCase();
+  if (type !== "image" && !(type === "media" && isLikelyVisualMediaAsset(details.url))) return false;
+
+  try {
+    const activeUrl = new URL(options.currentUrl);
+    if (activeUrl.protocol !== "https:" || !hostMatches(activeUrl.hostname, DISCORD_HOSTS)) return false;
+    if (AUTH_PATH.test(activeUrl.pathname)) return false;
+  } catch {
+    return false;
+  }
   return true;
 }
 
-module.exports = { shouldBlockHeavyResource };
+module.exports = { shouldBlockHeavyResource, isLikelyVisualMediaAsset };
