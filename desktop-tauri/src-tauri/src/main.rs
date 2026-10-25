@@ -152,7 +152,7 @@ fn install_webview2_resource_filter(platform_webview: tauri::webview::PlatformWe
         let image_filter = HSTRING::from("https://*/*");
         let media_filter = HSTRING::from("https://*/*");
 
-        core.AddWebResourceRequestedFilter(
+        core_v2.AddWebResourceRequestedFilter(
             PCWSTR(image_filter.as_wide().as_ptr()),
             COREWEBVIEW2_WEB_RESOURCE_CONTEXT_IMAGE,
         )?;
@@ -212,7 +212,7 @@ fn install_webview2_resource_filter(platform_webview: tauri::webview::PlatformWe
         }));
 
         let mut token = EventRegistrationToken::default();
-        core.add_WebResourceRequested(&handler, &mut token)?;
+        core_v2.add_WebResourceRequested(&handler, &mut token)?;
         Ok(())
     }
 }
