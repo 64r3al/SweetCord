@@ -164,7 +164,7 @@ fn install_webview2_resource_filter(platform_webview: tauri::webview::PlatformWe
         let current_core = core.clone();
         let no_content_reason = HSTRING::from("No Content");
         let no_content_headers = HSTRING::from("Content-Length: 0\r\n");
-        let handler = WebResourceRequestedEventHandler::create(Box::new(move |_sender, args| {
+        let handler = WebResourceRequestedEventHandler::create(Box::new(move |_sender, args| unsafe {
             let Some(args) = args else {
                 return Ok(());
             };
@@ -203,8 +203,8 @@ fn install_webview2_resource_filter(platform_webview: tauri::webview::PlatformWe
                 let response = environment.CreateWebResourceResponse(
                     None,
                     204,
-                    &no_content_reason,
-                    &no_content_headers,
+                    PCWSTR(no_content_reason.as_wide().as_ptr()),
+                    PCWSTR(no_content_headers.as_wide().as_ptr()),
                 )?;
                 args.SetResponse(&response)?;
             }
