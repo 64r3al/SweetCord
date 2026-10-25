@@ -39,9 +39,11 @@ jobs:
           node --check desktop-electron/lean-mode.cjs
           node --check desktop-electron/resource-policy.cjs
           node --check desktop-electron/permission-policy.cjs
+          node --check desktop-electron/performance-policy.cjs
           node --check desktop-electron/test/lean-mode.test.cjs
           node --check desktop-electron/test/resource-policy.test.cjs
           node --check desktop-electron/test/permission-policy.test.cjs
+          node --check desktop-electron/test/performance-policy.test.cjs
 
       - name: Install desktop dependencies
         run: npm install --prefix desktop-electron
