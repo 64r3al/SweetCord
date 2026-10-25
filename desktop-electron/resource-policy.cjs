@@ -3,6 +3,7 @@
 const VISUAL_MEDIA_EXTENSIONS = new Set([
   ".gif", ".gifv", ".mp4", ".m4v", ".mov", ".webm", ".ogv", ".avi", ".mkv", ".3gp", ".m3u8", ".mpd"
 ]);
+const ANIMATED_IMAGE_EXTENSIONS = new Set([".gif", ".gifv", ".apng"]);
 const DISCORD_HOSTS = ["discord.com", "discord.gg", "discordapp.com", "discordapp.net"];
 const AUTH_PATH = /^\/(login|register|oauth2|verify|email-verification|reset-password|logout)(\/|$)/i;
 
@@ -11,26 +12,39 @@ function hostMatches(hostname, candidates) {
   return candidates.some((domain) => normalized === domain || normalized.endsWith("." + domain));
 }
 
-function isLikelyVisualMediaAsset(rawUrl) {
-  if (typeof rawUrl !== "string" || !rawUrl) return false;
+function getPathExtension(rawUrl) {
+  if (typeof rawUrl !== "string" || !rawUrl) return "";
   try {
     const pathname = new URL(rawUrl).pathname.toLowerCase();
     const dot = pathname.lastIndexOf(".");
-    return dot >= 0 && VISUAL_MEDIA_EXTENSIONS.has(pathname.slice(dot));
+    return dot >= 0 ? pathname.slice(dot) : "";
   } catch {
-    return false;
+    return "";
   }
 }
 
+function isLikelyVisualMediaAsset(rawUrl) {
+  return VISUAL_MEDIA_EXTENSIONS.has(getPathExtension(rawUrl));
+}
+
+function isLikelyAnimatedVisualAsset(rawUrl) {
+  return ANIMATED_IMAGE_EXTENSIONS.has(getPathExtension(rawUrl));
+}
+
 /**
- * Block images and clearly identifiable video/GIF assets in the main Discord window.
- * Generic media URLs fail open because they can be audio-call related.
+ * Extreme Lite blocks all images plus clearly identifiable video/GIF media.
+ * Balanced keeps still images but blocks obvious animated-image/video assets.
+ * Unknown or malformed media URLs fail open so audio-call traffic is not guessed at.
  */
 function shouldBlockHeavyResource(details, options = {}) {
-  if (options.enabled !== true || !Number.isInteger(options.mainWebContentsId)) return false;
+  if (!Number.isInteger(options.mainWebContentsId)) return false;
   if (!details || details.webContentsId !== options.mainWebContentsId) return false;
+
+  const profile = options.profile || (options.enabled === true ? "extreme-lite" : "custom");
+  if (profile !== "balanced" && options.enabled !== true) return false;
+
   const type = String(details.resourceType || "").toLowerCase();
-  if (type !== "image" && !(type === "media" && isLikelyVisualMediaAsset(details.url))) return false;
+  if (type !== "image" && type !== "media") return false;
 
   try {
     const activeUrl = new URL(options.currentUrl);
@@ -39,7 +53,17 @@ function shouldBlockHeavyResource(details, options = {}) {
   } catch {
     return false;
   }
-  return true;
+
+  if (type === "image") {
+    if (profile === "balanced") return isLikelyAnimatedVisualAsset(details.url);
+    return options.enabled === true;
+  }
+
+  return isLikelyVisualMediaAsset(details.url);
 }
 
-module.exports = { shouldBlockHeavyResource, isLikelyVisualMediaAsset };
+module.exports = {
+  shouldBlockHeavyResource,
+  isLikelyVisualMediaAsset,
+  isLikelyAnimatedVisualAsset
+};
