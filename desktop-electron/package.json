@@ -1,8 +1,8 @@
 {
   "name": "sweetcord-desktop-shell",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
-  "description": "A lightweight SweetCord desktop shell for Discord's own web app",
+  "description": "Text-focused, low-effects Electron shell for Discord web",
   "main": "main.cjs",
   "scripts": {
     "start": "electron .",
@@ -23,6 +23,7 @@
     "files": [
       "main.cjs",
       "lean-mode.cjs",
+      "resource-policy.cjs",
       "package.json"
     ],
     "artifactName": "${productName}-Setup-${version}.${ext}",

@@ -27,6 +27,8 @@ To build or run the Electron shell from source on Windows, double-click **Launch
 
 The Tauri installer is published as a temporary artifact on the [Tauri workflow page](https://github.com/64r3al/SweetCord/actions/workflows/tauri-preview.yml). It is not the default desktop release.
 
+The Electron package version lives in `desktop-electron/package.json`. The desktop workflow publishes a versioned preview release when a new version is merged to `main`, alongside the mutable nightly preview. Treat versioned previews as test builds until real-PC resource checks pass.
+
 ## What's implemented in the SweetCord web app
 
 - **Authentication:** Discord OAuth through Supabase Auth, plus SweetCord email/password accounts when configured.
@@ -53,14 +55,15 @@ The goal is to reduce work SweetCord controls while preserving the features the 
 
 ### Electron and Tauri desktop shells
 
-- Batches avatar DOM work using requestAnimationFrame.
-- Scopes avatar observation to Discord's app subtree where available, rather than watching the entire document.
-- Deduplicates overlapping DOM additions and image-source changes so the same subtree or image is not needlessly processed more than once per batch.
-- Disables decorative transitions and trims selected upsell/navigation elements in the optional lean-mode injection.
-- Attempts to use static profile-avatar images when Discord's CDN supports them, and falls back to the original image if conversion fails.
-- Keeps GPU acceleration and required browser media permissions available; disabling them could harm rendering smoothness, audio, video, or screen sharing.
+The Windows Electron preview now starts in a deliberately aggressive **text-only mode**:
 
-These are code-level optimizations, **not a promise of a particular CPU, GPU, or RAM figure**. Discord's own web client, server/channel content, cached images, and active voice/video streams remain major parts of resource usage. The project has not established a universal 200 MB memory target.
+- Cancels image and media network requests initiated by the main Discord window, including profile images, server icons, banners, GIFs, stickers, custom emoji images, image attachments, and many external embeds.
+- Hides recognized avatar, banner, badge, emoji-picker, sticker/GIF, embed, attachment, activity, video, screen-sharing, Nitro, Shop, Quests, and promo UI elements.
+- Denies camera/microphone permission while text-only mode is active. Text-only mode is reversible from the native **Performance** menu and reloads Discord to apply the setting cleanly.
+- Skips avatar observers and avatar scans entirely while text-only mode is active; when disabled, the existing avatar code still batches observer work and deduplicates overlapping DOM additions.
+- Continues to remove decorative transitions and profile effects. Text-only mode is intentionally stripped-down: most images and media previews will not be visible.
+
+**Memory limit reality:** the mode reduces media fetching, decoding and compositing, but the Discord web client and Electron/Chromium runtime still run. The app does **not** enforce a hard 1 GiB memory ceiling; forcing one could crash the renderer or the app. A built-in memory snapshot and the Windows benchmark script report observed usage, but no fixed CPU, GPU or RAM savings are promised until the packaged release is measured on the target PC. If the remaining base client still exceeds 1 GiB, a substantially smaller custom client—not CSS alone—would be required.
 
 ### Measure performance on your PC
 
