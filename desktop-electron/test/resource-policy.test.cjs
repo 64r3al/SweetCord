@@ -1,15 +1,27 @@
 "use strict";
 const test = require("node:test");
 const assert = require("node:assert/strict");
-const { shouldBlockHeavyResource, isLikelyVisualMediaAsset } = require("../resource-policy.cjs");
-const options = { enabled: true, mainWebContentsId: 12, currentUrl: "https://discord.com/channels/@me" };
+const {
+  shouldBlockHeavyResource,
+  isLikelyVisualMediaAsset,
+  isLikelyAnimatedVisualAsset
+} = require("../resource-policy.cjs");
+const options = { enabled: true, profile: "extreme-lite", mainWebContentsId: 12, currentUrl: "https://discord.com/channels/@me" };
 
-test("Ultra-Lite blocks images from the main Discord window", () => {
+test("Extreme Lite blocks images from the main Discord window", () => {
   assert.equal(shouldBlockHeavyResource({webContentsId:12,resourceType:"image",url:"https://cdn.discordapp.com/avatars/1/a.png"},options),true);
 });
-test("Ultra-Lite blocks clearly identified visual media", () => {
+test("Extreme Lite blocks clearly identified visual media", () => {
   assert.equal(shouldBlockHeavyResource({webContentsId:12,resourceType:"media",url:"https://cdn.discordapp.com/clip.mp4?q=1"},options),true);
   assert.equal(shouldBlockHeavyResource({webContentsId:12,resourceType:"media",url:"https://cdn.discordapp.com/clip.webm"},options),true);
+});
+test("Balanced preserves still images while blocking recognizable animation and video", () => {
+  const balanced = {...options, enabled: false, profile: "balanced"};
+  assert.equal(shouldBlockHeavyResource({webContentsId:12,resourceType:"image",url:"https://cdn.discordapp.com/avatars/1/a.png"},balanced),false);
+  assert.equal(shouldBlockHeavyResource({webContentsId:12,resourceType:"image",url:"https://cdn.discordapp.com/attachments/1/2/reaction.gif?size=128"},balanced),true);
+  assert.equal(shouldBlockHeavyResource({webContentsId:12,resourceType:"image",url:"https://cdn.discordapp.com/animation.apng"},balanced),true);
+  assert.equal(shouldBlockHeavyResource({webContentsId:12,resourceType:"media",url:"https://cdn.discordapp.com/clip.mp4"},balanced),true);
+  assert.equal(shouldBlockHeavyResource({webContentsId:12,resourceType:"media",url:"https://media.discordapp.net/track"},balanced),false);
 });
 test("ambiguous media and audio assets are allowed to protect voice calls", () => {
   for (const url of ["https://cdn.discordapp.com/voice.ogg","https://media.discordapp.net/track","https://discord.com/api/voice"]) {
@@ -17,6 +29,8 @@ test("ambiguous media and audio assets are allowed to protect voice calls", () =
   }
   assert.equal(isLikelyVisualMediaAsset("https://cdn.discordapp.com/voice.ogg"),false);
   assert.equal(isLikelyVisualMediaAsset("https://cdn.discordapp.com/clip.mp4?token=x"),true);
+  assert.equal(isLikelyAnimatedVisualAsset("https://cdn.discordapp.com/clip.gif?token=x"),true);
+  assert.equal(isLikelyAnimatedVisualAsset("https://cdn.discordapp.com/still.png"),false);
 });
 test("scripts, API calls, stylesheets and fonts are not blocked", () => {
   for(const resourceType of ["script","stylesheet","xhr","fetch","font","mainFrame","other"]) {
@@ -29,9 +43,12 @@ test("auth popups and login/recovery routes are exempt", () => {
     assert.equal(shouldBlockHeavyResource({webContentsId:12,resourceType:"image",url:"https://cdn.discordapp.com/image.png"},{...options,currentUrl}),false);
   }
 });
-test("disabling Ultra-Lite allows images and video again", () => {
-  assert.equal(shouldBlockHeavyResource({webContentsId:12,resourceType:"image",url:"https://cdn.discordapp.com/image.png"},{...options,enabled:false}),false);
-  assert.equal(shouldBlockHeavyResource({webContentsId:12,resourceType:"media",url:"https://cdn.discordapp.com/clip.mp4"},{...options,enabled:false}),false);
+test("disabling Custom mode allows images and video again", () => {
+  assert.equal(shouldBlockHeavyResource({webContentsId:12,resourceType:"image",url:"https://cdn.discordapp.com/image.png"},{...options,profile:"custom",enabled:false}),false);
+  assert.equal(shouldBlockHeavyResource({webContentsId:12,resourceType:"media",url:"https://cdn.discordapp.com/clip.mp4"},{...options,profile:"custom",enabled:false}),false);
+});
+test("legacy callers without a profile retain Extreme Lite behavior when enabled", () => {
+  assert.equal(shouldBlockHeavyResource({webContentsId:12,resourceType:"image",url:"https://cdn.discordapp.com/image.png"},{enabled:true,mainWebContentsId:12,currentUrl:"https://discord.com/channels/@me"}),true);
 });
 test("malformed metadata fails open", () => {
   assert.equal(shouldBlockHeavyResource({},options),false);
