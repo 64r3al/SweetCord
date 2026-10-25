@@ -8,9 +8,9 @@ This is a separate experimental Windows desktop shell. It does **not** replace t
 - Uses the system-installed Evergreen WebView2 runtime where available; the installer uses Tauri's download-bootstrapper mode if the runtime is missing.
 - Does not expose SweetCord commands or a token API to the remote webpage.
 - Allows HTTPS navigation only to Discord and a small set of identity-provider hosts. Normal HTTP(S)/mailto external links open in the system browser; unsafe schemes are ignored.
-- Applies reduced-motion styling, hides common upsell destinations/decorative profile layers, and batches avatar handling through requestAnimationFrame. Avatar observation is scoped to Discord's `#app-mount` subtree and deduplicates overlapping additions and source changes to reduce repeated DOM traversal.
+- Applies reduced-motion styling, hides common upsell destinations/decorative profile layers and video/camera/screen-share controls, and batches avatar handling through requestAnimationFrame. Avatar observation is scoped to Discord's `#app-mount` subtree and deduplicates overlapping additions and source changes to reduce repeated DOM traversal.
 - Replaces animated **profile avatars** with PNG URLs when the CDN supports them, with a one-shot fallback to the original GIF on load failure. It deliberately does not rewrite message attachments, animated stickers, or call-media streams.
-- Keeps microphone, camera, display-capture, notifications, and autoplay permission requests on the browser's default permission flow for Discord HTTPS pages; other permission categories are denied.
+- Keeps microphone, notifications, and autoplay permission requests on the browser's default permission flow for Discord HTTPS pages. Camera and display-capture permission requests are denied so this preview stays voice-only.
 - The new-window handler checks the initial popup URL against the HTTPS allowlist. Non-allowlisted destinations open in the system browser. Trusted authentication popups currently use WebView2's default popup implementation to avoid a known Windows deadlock when creating a child window synchronously inside the callback; subsequent redirects inside those default popups are not independently filtered by SweetCord's main-window navigation handler, so this remains an experimental compatibility/security limitation.
 
 ## Build on Windows

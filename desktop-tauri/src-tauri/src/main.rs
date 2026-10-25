@@ -71,10 +71,9 @@ fn permission_response(webview: Webview<tauri::Wry>, kind: PermissionKind) -> Pe
 
     match kind {
         PermissionKind::Microphone
-        | PermissionKind::Camera
-        | PermissionKind::DisplayCapture
         | PermissionKind::Notifications
         | PermissionKind::Autoplay => PermissionResponse::Default,
+        PermissionKind::Camera | PermissionKind::DisplayCapture => PermissionResponse::Deny,
         _ => PermissionResponse::Deny,
     }
 }

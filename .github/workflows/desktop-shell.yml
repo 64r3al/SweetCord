@@ -38,8 +38,10 @@ jobs:
           node --check desktop-electron/main.cjs
           node --check desktop-electron/lean-mode.cjs
           node --check desktop-electron/resource-policy.cjs
+          node --check desktop-electron/permission-policy.cjs
           node --check desktop-electron/test/lean-mode.test.cjs
           node --check desktop-electron/test/resource-policy.test.cjs
+          node --check desktop-electron/test/permission-policy.test.cjs
 
       - name: Install desktop dependencies
         run: npm install --prefix desktop-electron
@@ -97,7 +99,7 @@ jobs:
 
             Download the Windows installer below, run it, and sign in on Discord's official page.
 
-            This app wraps Discord's own web app in a SweetCord-branded Electron window. Text-only mode blocks image/media requests from the main Discord tab, hides recognized visual extras, and disables camera/microphone permission by default. Discord's base web client and Chromium still run; there is no hard 1 GiB cap and actual savings must be measured on the target PC.
+            This app wraps Discord's own web app in a SweetCord-branded Electron window. Ultra-Lite blocks images and clearly identified video assets, preserves microphone-only voice calls, and denies camera/screen capture. Ambiguous media URLs are allowed to protect voice compatibility. The Discord web client and Chromium still run; there is no hard 1 GiB cap and savings must be measured on the target PC.
 
             SweetCord is an unofficial third-party client and is not affiliated with Discord. Third-party client modifications may carry account and Terms of Service risks.
           prerelease: true
@@ -154,16 +156,16 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ steps.version.outputs.version }}
-          name: SweetCord Desktop v${{ steps.version.outputs.version }} — Text-only Preview
+          name: SweetCord Desktop v${{ steps.version.outputs.version }} — Ultra-Lite Voice & Text Preview
           target_commitish: ${{ github.sha }}
           body: |
             **Versioned preview release — not a stable release.**
 
-            This build starts in text-only mode. It blocks image/media requests from the main Discord tab and hides recognized avatars, profile decorations, GIFs, stickers, emoji imagery, embeds, video/screen-share controls and Nitro/Shop/Quests promotions. Camera/microphone permission is denied while text-only mode is enabled.
+            This build starts in Ultra-Lite mode. It blocks images and clearly identified video assets, hides visual extras and promotions, and preserves microphone-only audio calls. Camera and display capture are denied; ambiguous media URLs are allowed to protect calling compatibility.
 
             **Memory note:** This wrapper cannot enforce a hard 1 GiB total-memory ceiling without risking renderer or app crashes. The Discord web client and Electron/Chromium remain active. Compare the packaged installer with official Discord on the same Windows PC before drawing conclusions about CPU, GPU or RAM savings.
 
-            To test, download the Windows installer below. Use **Performance → Text-only mode** to re-enable visuals if needed; changing that setting reloads Discord.
+            To test, download the Windows installer below. Use **Performance → Ultra-Lite mode** to re-enable image visuals if needed; changing that setting reloads Discord. Video and screen sharing remain disabled.
 
             SweetCord is unofficial and not affiliated with Discord. Third-party client modifications may carry account and Terms of Service risks.
           prerelease: true

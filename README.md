@@ -55,19 +55,21 @@ The goal is to reduce work SweetCord controls while preserving the features the 
 
 ### Electron and Tauri desktop shells
 
-The Windows Electron preview now starts in a deliberately aggressive **text-only mode**:
+The default Windows Electron preview starts in **Ultra-Lite voice + text mode**:
 
-- Cancels image and media network requests initiated by the main Discord window, including profile images, server icons, banners, GIFs, stickers, custom emoji images, image attachments, and many external embeds.
-- Hides recognized avatar, banner, badge, emoji-picker, sticker/GIF, embed, attachment, activity, video, screen-sharing, Nitro, Shop, Quests, and promo UI elements.
-- Denies camera/microphone permission while text-only mode is active. Text-only mode is reversible from the native **Performance** menu and reloads Discord to apply the setting cleanly.
-- Skips avatar observers and avatar scans entirely while text-only mode is active; when disabled, the existing avatar code still batches observer work and deduplicates overlapping DOM additions.
-- Continues to remove decorative transitions and profile effects. Text-only mode is intentionally stripped-down: most images and media previews will not be visible.
+- Blocks image requests, including profile photos, server icons, banners, GIFs, stickers, emoji images, image attachments and embeds.
+- Blocks media requests only when the URL clearly identifies a video/GIF asset. Ambiguous media URLs are allowed to protect voice compatibility.
+- Allows microphone-only capture on HTTPS Discord origins; camera, mixed audio/video capture and display capture are denied.
+- Hides visual extras, profile decoration, emoji/sticker UI, video/camera/screen-share controls, Activities and Nitro/Shop/Quests promotions.
+- Skips avatar observers and scans while Ultra-Lite is enabled.
 
-**Memory limit reality:** the mode reduces media fetching, decoding and compositing, but the Discord web client and Electron/Chromium runtime still run. The app does **not** enforce a hard 1 GiB memory ceiling; forcing one could crash the renderer or the app. A built-in memory snapshot and the Windows benchmark script report observed usage, but no fixed CPU, GPU or RAM savings are promised until the packaged release is measured on the target PC. If the remaining base client still exceeds 1 GiB, a substantially smaller custom client—not CSS alone—would be required.
+This is a resource-focused wrapper around Discord's official web client, not a custom lightweight protocol client. Discord's scripts, API calls, text rendering and Electron/Chromium still run. There is no hard 1 GiB RAM ceiling; resource savings must be measured on the target PC.
+
+**Tauri/WebView2 remains experimental.** It denies camera/screen capture but does not yet provide Electron's request-level image blocking. Do not assume it uses less RAM simply because it uses the system WebView2 runtime.
 
 ### Measure performance on your PC
 
-For a fair comparison, use the same Windows PC, account, network, window size, and activity for each build. Test separately at idle, in a text conversation, during voice, and during video or screen sharing.
+For a fair comparison, use the same Windows PC, account, network, window size, and activity for each build. Test separately at idle, in a text conversation, and during an active microphone-based voice call. Video and screen sharing are disabled in Ultra-Lite.
 
 From PowerShell in the repository root:
 
@@ -77,7 +79,7 @@ powershell -ExecutionPolicy Bypass -File .\desktop-electron\benchmark-windows.ps
 
 The script reports aggregate working set, private memory, and average CPU use for the process names selected. It does not upload or save your measurements. A process that exits during sampling or a child process with a different name can affect the comparison.
 
-For GPU activity, open **Task Manager → Details**, enable the **GPU** and **GPU engine** columns, and compare equivalent scenarios. For the Tauri build, inspect the WebView2 host and renderer processes as well.
+For GPU activity, open **Task Manager → Details**, enable the **GPU** and **GPU engine** columns, and compare equivalent scenarios. For the experimental Tauri build, inspect the WebView2 host and renderer processes as well; it does not yet use Electron's request-level image blocking.
 
 ## Architecture and setup
 

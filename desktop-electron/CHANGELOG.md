@@ -1,5 +1,15 @@
 # Changelog
 
+## v0.4.0 — Ultra-Lite voice + text preview
+
+- Preserve microphone-only voice calls and keep voice-channel UI/audio elements available.
+- Block images and only clearly identified video/GIF media assets; ambiguous media requests fail open to protect calling compatibility.
+- Add tested microphone-only permission policy: camera, mixed audio/video and display capture are denied.
+- Add permission-policy regression tests and include the policy module in packaged builds.
+- Update performance guidance; no unmeasured CPU/RAM/GPU savings or fixed memory cap are claimed.
+
+Known limits: Discord's web client and Electron/Chromium still run, unknown-extension video requests may pass through, and real Windows benchmarking plus manual voice-call validation remain necessary.
+
 ## v0.3.0 — Text-only desktop preview
 
 This is an experimental Windows preview focused on reducing Discord's image/media workload.
