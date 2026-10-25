@@ -83,10 +83,6 @@ const LEAN_STYLES = [
   'html.sweetcord-text-only-mode #app-mount button[aria-label*="screen share" i],',
   'html.sweetcord-text-only-mode #app-mount button[aria-label*="start video" i]'
   '{ display: none !important; }',
-  'html.sweetcord-text-only-mode #app-mount *,',
-  'html.sweetcord-text-only-mode #app-mount *::before,',
-  'html.sweetcord-text-only-mode #app-mount *::after'
-  '{ animation: none !important; transition: none !important; scroll-behavior: auto !important; box-shadow: none !important; text-shadow: none !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }'
 ].join("\n");
 
 function buildLeanModeScript(settings) {
