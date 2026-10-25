@@ -353,13 +353,13 @@ function showMemorySnapshot() {
   const processLines = metrics.map((metric) => {
     const ws = Number(metric.memory?.workingSetSize || 0) / 1024;
     return `${metric.type || "process"} (PID ${metric.pid}): ${ws.toFixed(1)} MiB`;
-  }).join("\\n");
+  }).join("\n");
 
   const options = {
     type: "info",
     title: "SweetCord memory snapshot",
     message: `Working set total: ${workingSetMiB.toFixed(1)} MiB across ${metrics.length} Electron processes`,
-    detail: `Private memory total: ${privateMiB.toFixed(1)} MiB\\n\\n${processLines}\\n\\nThis is a diagnostic snapshot, not a hard 1 GiB cap. Windows may report shared memory differently from Task Manager's app grouping.`,
+    detail: `Private memory total: ${privateMiB.toFixed(1)} MiB\n\n${processLines}\n\nThis is a diagnostic snapshot, not a hard 1 GiB cap. Windows may report shared memory differently from Task Manager's app grouping.`,
     buttons: ["OK"],
     noLink: true
   };
