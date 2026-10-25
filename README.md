@@ -55,17 +55,18 @@ The goal is to reduce work SweetCord controls while preserving the features the 
 
 ### Electron and Tauri desktop shells
 
-The default Windows Electron preview starts in **Ultra-Lite voice + text mode**:
+The Windows Electron preview now starts in **Extreme Lite**, with configurable **Balanced** and **Custom** profiles:
 
-- Blocks image requests, including profile photos, server icons, banners, GIFs, stickers, emoji images, image attachments and embeds.
-- Blocks media requests only when the URL clearly identifies a video/GIF asset. Ambiguous media URLs are allowed to protect voice compatibility.
+- **Extreme Lite** blocks image requests and clearly identified video assets; **Balanced** allows still images while blocking obvious GIF/APNG/video formats; **Custom** exposes individual controls.
+- Ambiguous media URLs remain allowed to protect voice compatibility; filtering never intentionally blocks audio-only resources.
 - Allows microphone-only capture on HTTPS Discord origins; camera, mixed audio/video capture and display capture are denied.
-- Hides visual extras, profile decoration, emoji/sticker UI, video/camera/screen-share controls, Activities and Nitro/Shop/Quests promotions.
-- Skips avatar observers and scans while Ultra-Lite is enabled.
+- Hides visual extras, profile decoration, video/camera/screen-share controls, Activities and optional promotions.
+- Skips avatar observers and scans while Extreme Lite is enabled.
+- Samples Electron CPU and memory for five seconds only when the user opens the diagnostic from the Performance menu.
 
 This is a resource-focused wrapper around Discord's official web client, not a custom lightweight protocol client. Discord's scripts, API calls, text rendering and Electron/Chromium still run. There is no hard 1 GiB RAM ceiling; resource savings must be measured on the target PC.
 
-**Tauri/WebView2 remains experimental.** It denies camera/screen capture but does not yet provide Electron's request-level image blocking. Do not assume it uses less RAM simply because it uses the system WebView2 runtime.
+**Tauri/WebView2 remains experimental.** Its Windows build now attempts native WebView2 request interception for images and clearly identified visual-media URLs, with auth-route exemptions. That filter must pass Windows CI and manual voice tests, and Tauri still must not be assumed lighter merely because it uses the system runtime.
 
 ### Measure performance on your PC
 
@@ -74,12 +75,12 @@ For a fair comparison, use the same Windows PC, account, network, window size, a
 From PowerShell in the repository root:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File .\desktop-electron\benchmark-windows.ps1 -ProcessName SweetCord,Discord,Vesktop -SampleSeconds 30
+powershell -ExecutionPolicy Bypass -File .\desktop-electron\benchmark-windows.ps1 -ProcessName SweetCord,Discord,Vesktop -SampleSeconds 60 -IntervalSeconds 2 -OutputPath .\benchmark-sweetcord.csv
 ```
 
-The script reports aggregate working set, private memory, and average CPU use for the process names selected. It does not upload or save your measurements. A process that exits during sampling or a child process with a different name can affect the comparison.
+The script now samples repeatedly and reports median/peak working set and private memory, median/P95/peak CPU, and peak process count. Samples stay local and are only written to CSV when `-OutputPath` is supplied. A process that exits during sampling or a child process with a different name can affect the comparison.
 
-For GPU activity, open **Task Manager → Details**, enable the **GPU** and **GPU engine** columns, and compare equivalent scenarios. For the experimental Tauri build, inspect the WebView2 host and renderer processes as well; it does not yet use Electron's request-level image blocking.
+For GPU activity, open **Task Manager → Details**, enable the **GPU** and **GPU engine** columns, and compare equivalent scenarios. For Tauri, inspect WebView2 host/renderer processes as well, and isolate the test from unrelated Edge windows where possible.
 
 ## Architecture and setup
 
