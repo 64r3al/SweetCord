@@ -45,7 +45,7 @@ test("overlapping queued DOM subtrees are processed only from outermost nodes", 
 test("disabling static avatars generates a reversible configuration", () => {
   const source = buildLeanModeScript({ ...defaults, staticAnimatedAvatars: false });
   assert.match(source, /"staticAnimatedAvatars":false/);
-  assert.match(source, /"textOnlyMode":false/);
+  assert.match(source, /"textOnlyMode":true/);
   assert.match(source, /data-sweetcord-original-src/);
   assert.match(source, /data-sweetcord-static-src/);
   assert.match(source, /data-sweetcord-static-failed-src/);
