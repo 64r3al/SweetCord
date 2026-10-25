@@ -17,7 +17,7 @@ use webview2_com::{
 #[cfg(windows)]
 use windows::{
     core::{HSTRING, Interface, PCWSTR, PWSTR},
-    Win32::System::{Com::CoTaskMemFree, WinRT::EventRegistrationToken},
+    Win32::System::Com::CoTaskMemFree,
 };
 
 const DISCORD_HOSTS: &[&str] = &[
@@ -211,7 +211,7 @@ fn install_webview2_resource_filter(platform_webview: tauri::webview::PlatformWe
             Ok(())
         }));
 
-        let mut token = EventRegistrationToken::default();
+        let mut token = Default::default();
         core_v2.add_WebResourceRequested(&handler, &mut token)?;
         Ok(())
     }
