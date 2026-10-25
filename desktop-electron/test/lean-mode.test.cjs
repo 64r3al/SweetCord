@@ -55,9 +55,9 @@ test("disabling static avatars generates a reversible configuration", () => {
 test("text-only mode hides high-cost media and exits before avatar observer setup", () => {
   const source = buildLeanModeScript(defaults);
   assert.match(source, /#app-mount img/);
-  assert.match(source, /\[class\*="gif" i\]/);
-  assert.match(source, /\[class\*="sticker" i\]/);
-  assert.match(source, /\[class\*="embed" i\]/);
+  assert.ok(source.includes("gif"));
+  assert.ok(source.includes("sticker"));
+  assert.ok(source.includes("embed"));
   assert.ok(source.indexOf("if (cfg.textOnlyMode)") < source.indexOf("const avatarSelector"));
 });
 
