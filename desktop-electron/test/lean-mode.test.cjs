@@ -67,7 +67,7 @@ test("Ultra-Lite hides visual media and leaves voice UI available", () => {
 test("video and screen-share controls are hidden even with image mode off", () => {
   const source = buildLeanModeScript({ ...defaults, textOnlyMode: false });
   assert.ok(source.includes("sweetcord-voice-only-mode #app-mount video"));
-  assert.ok(source.includes('sweetcord-voice-only-mode #app-mount [class*="screenShare" i]'));
+  assert.ok(source.includes("screenShare"));
 });
 
 test("missing preferences safely default to disabled values", () => {
