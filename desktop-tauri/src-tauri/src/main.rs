@@ -15,7 +15,7 @@ use webview2_com::{
 };
 #[cfg(windows)]
 use windows::{
-    core::{HSTRING, Interface, PCWSTR, PWSTR},
+    core::{w, Interface, PCWSTR, PWSTR},
     Win32::System::Com::CoTaskMemFree,
 };
 
@@ -148,21 +148,19 @@ fn install_webview2_resource_filter(platform_webview: tauri::webview::PlatformWe
         let core = platform_webview.controller().CoreWebView2()?;
         let core_v2: ICoreWebView2_2 = core.cast()?;
         let environment = core_v2.Environment()?;
-        let image_filter = HSTRING::from("https://*/*");
-        let media_filter = HSTRING::from("https://*/*");
+        let image_filter = w!("https://*/*");
+        let media_filter = w!("https://*/*");
 
         core_v2.AddWebResourceRequestedFilter(
-            PCWSTR(image_filter.as_wide().as_ptr()),
+            image_filter,
             COREWEBVIEW2_WEB_RESOURCE_CONTEXT_IMAGE,
         )?;
         core_v2.AddWebResourceRequestedFilter(
-            PCWSTR(media_filter.as_wide().as_ptr()),
+            media_filter,
             COREWEBVIEW2_WEB_RESOURCE_CONTEXT_MEDIA,
         )?;
 
         let current_core = core.clone();
-        let no_content_reason = HSTRING::from("No Content");
-        let no_content_headers = HSTRING::from("Content-Length: 0\r\n");
         let handler = WebResourceRequestedEventHandler::create(Box::new(move |_sender, args| unsafe {
             let Some(args) = args else {
                 return Ok(());
@@ -202,8 +200,8 @@ fn install_webview2_resource_filter(platform_webview: tauri::webview::PlatformWe
                 let response = environment.CreateWebResourceResponse(
                     None,
                     204,
-                    PCWSTR(no_content_reason.as_wide().as_ptr()),
-                    PCWSTR(no_content_headers.as_wide().as_ptr()),
+                    w!("No Content"),
+                    w!("Content-Length: 0\r\n"),
                 )?;
                 args.SetResponse(&response)?;
             }
