@@ -48,7 +48,45 @@ const LEAN_STYLES = [
   'html.sweetcord-trim-profile-decorations #app-mount [class*="avatarDecoration" i],',
   'html.sweetcord-trim-profile-decorations #app-mount [class*="profileDecoration" i],',
   'html.sweetcord-trim-profile-decorations #app-mount [class*="profilePremium" i]',
-  '{ display: none !important; }'
+  '{ display: none !important; }',
+  'html.sweetcord-text-only-mode #app-mount img,',
+  'html.sweetcord-text-only-mode #app-mount picture,',
+  'html.sweetcord-text-only-mode #app-mount video,',
+  'html.sweetcord-text-only-mode #app-mount audio,',
+  'html.sweetcord-text-only-mode #app-mount canvas,',
+  'html.sweetcord-text-only-mode #app-mount [class*="avatar" i],',
+  'html.sweetcord-text-only-mode #app-mount [class*="guildIcon" i],',
+  'html.sweetcord-text-only-mode #app-mount [class*="profileBanner" i],',
+  'html.sweetcord-text-only-mode #app-mount [class*="profileEffect" i],',
+  'html.sweetcord-text-only-mode #app-mount [class*="profileBadge" i],',
+  'html.sweetcord-text-only-mode #app-mount [class*="userProfileBadge" i],',
+  'html.sweetcord-text-only-mode #app-mount [class*="avatarDecoration" i],',
+  'html.sweetcord-text-only-mode #app-mount [class*="emoji" i],',
+  'html.sweetcord-text-only-mode #app-mount [class*="sticker" i],',
+  'html.sweetcord-text-only-mode #app-mount [class*="gif" i],',
+  'html.sweetcord-text-only-mode #app-mount [class*="embed" i],',
+  'html.sweetcord-text-only-mode #app-mount [class*="attachment" i],',
+  'html.sweetcord-text-only-mode #app-mount [class*="image" i],',
+  'html.sweetcord-text-only-mode #app-mount [class*="video" i],',
+  'html.sweetcord-text-only-mode #app-mount [class*="voice" i],',
+  'html.sweetcord-text-only-mode #app-mount [class*="screenShare" i],',
+  'html.sweetcord-text-only-mode #app-mount [class*="activity" i],',
+  'html.sweetcord-text-only-mode #app-mount [class*="nitro" i],',
+  'html.sweetcord-text-only-mode #app-mount [class*="premium" i],',
+  'html.sweetcord-text-only-mode #app-mount [class*="quest" i],',
+  'html.sweetcord-text-only-mode #app-mount [class*="shop" i],',
+  'html.sweetcord-text-only-mode #app-mount button[aria-label*="emoji" i],',
+  'html.sweetcord-text-only-mode #app-mount button[aria-label*="gif" i],',
+  'html.sweetcord-text-only-mode #app-mount button[aria-label*="sticker" i],',
+  'html.sweetcord-text-only-mode #app-mount button[aria-label*="nitro" i],',
+  'html.sweetcord-text-only-mode #app-mount button[aria-label*="gift" i],',
+  'html.sweetcord-text-only-mode #app-mount button[aria-label*="screen share" i],',
+  'html.sweetcord-text-only-mode #app-mount button[aria-label*="start video" i]'
+  '{ display: none !important; }',
+  'html.sweetcord-text-only-mode #app-mount *,',
+  'html.sweetcord-text-only-mode #app-mount *::before,',
+  'html.sweetcord-text-only-mode #app-mount *::after'
+  '{ animation: none !important; transition: none !important; scroll-behavior: auto !important; box-shadow: none !important; text-shadow: none !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }'
 ].join("\n");
 
 function buildLeanModeScript(settings) {
@@ -56,7 +94,8 @@ function buildLeanModeScript(settings) {
     leanMode: settings?.leanMode === true,
     reduceMotion: settings?.reduceMotion === true,
     hideProfileDecorations: settings?.hideProfileDecorations === true,
-    staticAnimatedAvatars: settings?.staticAnimatedAvatars === true
+    staticAnimatedAvatars: settings?.staticAnimatedAvatars === true,
+    textOnlyMode: settings?.textOnlyMode === true
   };
 
   const body = [
@@ -70,6 +109,8 @@ function buildLeanModeScript(settings) {
     'root.classList.toggle("sweetcord-lean-mode", cfg.leanMode);',
     'root.classList.toggle("sweetcord-reduced-motion", cfg.reduceMotion);',
     'root.classList.toggle("sweetcord-trim-profile-decorations", cfg.hideProfileDecorations);',
+    'root.classList.toggle("sweetcord-text-only-mode", cfg.textOnlyMode);',
+    'if (cfg.textOnlyMode) { if (window.__sweetCordAvatarObserver) { window.__sweetCordAvatarObserver.disconnect(); window.__sweetCordAvatarObserver = null; window.__sweetCordAvatarObserverInstalled = false; } return; }',
     'const previousStaticState = window.__sweetCordStaticAvatarState;',
     'window.__sweetCordStaticAvatarState = cfg.staticAnimatedAvatars;',
     'const avatarSelector = \'img[src*="/avatars/"], img[data-sweetcord-original-src]\';',
@@ -158,6 +199,7 @@ function buildLeanModeScript(settings) {
     '    if (pendingNodes.size || pendingImages.size) queueFlush();',
     '  });',
     '  observer.observe(getAvatarRoot(), { childList: true, subtree: true, attributes: true, attributeFilter: ["src"] });',
+    '  window.__sweetCordAvatarObserver = observer;',
     '  window.__sweetCordAvatarObserverInstalled = true;',
     '}',
     'if (previousStaticState !== cfg.staticAnimatedAvatars || !window.__sweetCordAvatarInitialScanDone) {',
