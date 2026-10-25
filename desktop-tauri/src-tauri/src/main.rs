@@ -9,8 +9,7 @@ use tauri::{AppHandle, Url};
 #[cfg(windows)]
 use webview2_com::{
     Microsoft::Web::WebView2::Win32::{
-        ICoreWebView2_2, COREWEBVIEW2_WEB_RESOURCE_CONTEXT,
-        COREWEBVIEW2_WEB_RESOURCE_CONTEXT_IMAGE, COREWEBVIEW2_WEB_RESOURCE_CONTEXT_MEDIA,
+        ICoreWebView2_2, COREWEBVIEW2_WEB_RESOURCE_CONTEXT_IMAGE, COREWEBVIEW2_WEB_RESOURCE_CONTEXT_MEDIA,
     },
     WebResourceRequestedEventHandler,
 };
@@ -156,7 +155,7 @@ fn install_webview2_resource_filter(platform_webview: tauri::webview::PlatformWe
             PCWSTR(image_filter.as_wide().as_ptr()),
             COREWEBVIEW2_WEB_RESOURCE_CONTEXT_IMAGE,
         )?;
-        core.AddWebResourceRequestedFilter(
+        core_v2.AddWebResourceRequestedFilter(
             PCWSTR(media_filter.as_wide().as_ptr()),
             COREWEBVIEW2_WEB_RESOURCE_CONTEXT_MEDIA,
         )?;
