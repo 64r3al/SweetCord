@@ -13,6 +13,13 @@ const path = require("node:path");
 const { buildLeanModeScript } = require("./lean-mode.cjs");
 const { shouldBlockHeavyResource } = require("./resource-policy.cjs");
 const { isPermissionRequestAllowed, isPermissionCheckAllowed } = require("./permission-policy.cjs");
+const {
+  DEFAULT_PREFERENCES,
+  BOOLEAN_DEFAULTS,
+  normalizePreferences,
+  resolvePerformanceSettings,
+  settingsForProfile
+} = require("./performance-policy.cjs");
 const DISCORD_START_URL = "https://discord.com/app";
 const DISCORD_HOSTS = ["discord.com", "discord.gg", "discordapp.com", "discordapp.net"];
 const OAUTH_HOSTS = [
@@ -93,20 +100,24 @@ function attachNavigationPolicy(window) {
   });
 }
 
-const DEFAULT_PREFERENCES = Object.freeze({
-  leanMode: true,
-  reduceMotion: true,
-  hideProfileDecorations: true,
-  staticAnimatedAvatars: true,
-  textOnlyMode: true
-});
-
 let preferences = { ...DEFAULT_PREFERENCES };
+let performanceProfile = DEFAULT_PREFERENCES.performanceProfile;
 let leanModeEnabled = DEFAULT_PREFERENCES.leanMode;
 let reduceMotionEnabled = DEFAULT_PREFERENCES.reduceMotion;
 let hideProfileDecorationsEnabled = DEFAULT_PREFERENCES.hideProfileDecorations;
 let staticAnimatedAvatarsEnabled = DEFAULT_PREFERENCES.staticAnimatedAvatars;
 let textOnlyModeEnabled = DEFAULT_PREFERENCES.textOnlyMode;
+
+function syncPreferenceState() {
+  preferences = normalizePreferences(preferences);
+  performanceProfile = preferences.performanceProfile;
+  const effective = resolvePerformanceSettings(preferences);
+  leanModeEnabled = effective.leanMode;
+  reduceMotionEnabled = effective.reduceMotion;
+  hideProfileDecorationsEnabled = effective.hideProfileDecorations;
+  staticAnimatedAvatarsEnabled = effective.staticAnimatedAvatars;
+  textOnlyModeEnabled = effective.textOnlyMode;
+}
 
 function getPreferencesPath() {
   return path.join(app.getPath("userData"), "sweetcord-preferences.json");
@@ -116,11 +127,7 @@ function loadPreferences() {
   try {
     const file = getPreferencesPath();
     if (!existsSync(file)) return { ...DEFAULT_PREFERENCES };
-    const raw = JSON.parse(readFileSync(file, "utf8"));
-    return Object.fromEntries(Object.entries(DEFAULT_PREFERENCES).map(([key, fallback]) => [
-      key,
-      raw && typeof raw[key] === "boolean" ? raw[key] : fallback
-    ]));
+    return normalizePreferences(JSON.parse(readFileSync(file, "utf8")));
   } catch {
     return { ...DEFAULT_PREFERENCES };
   }
@@ -159,23 +166,50 @@ function installLeanModeHooks(window) {
 
 function setPreference(name, enabled) {
   const key = String(name);
-  if (!Object.prototype.hasOwnProperty.call(DEFAULT_PREFERENCES, key)) return;
+  if (!Object.prototype.hasOwnProperty.call(BOOLEAN_DEFAULTS, key)) return;
 
-  preferences[key] = Boolean(enabled);
-  leanModeEnabled = preferences.leanMode;
-  reduceMotionEnabled = preferences.reduceMotion;
-  hideProfileDecorationsEnabled = preferences.hideProfileDecorations;
-  staticAnimatedAvatarsEnabled = preferences.staticAnimatedAvatars;
-  textOnlyModeEnabled = preferences.textOnlyMode;
+  // Start from the currently active profile, so the first manual adjustment
+  // creates a Custom profile with no surprise changes to other settings.
+  const current = resolvePerformanceSettings(preferences);
+  preferences = normalizePreferences({
+    ...preferences,
+    ...current,
+    [key]: Boolean(enabled),
+    performanceProfile: "custom"
+  });
+  syncPreferenceState();
   savePreferences();
   makeMenu();
   applyLeanMode(mainWindow);
-  // Request interception takes effect immediately, but current images may already
-  // be cached in the renderer. Reloading guarantees the selected mode is applied
-  // before the next round of Discord UI assets is requested.
+
+  // Resource filtering is installed at the session level. Reload after changing
+  // this flag so already-cached images and video are reconciled with the policy.
   if (key === "textOnlyMode" && mainWindow && !mainWindow.isDestroyed()) {
     mainWindow.reload();
   }
+}
+
+function setPerformanceProfile(profile) {
+  if (!["extreme-lite", "balanced", "custom"].includes(profile)) return;
+
+  const selectedSettings = profile === "custom"
+    ? resolvePerformanceSettings(preferences)
+    : settingsForProfile(profile);
+  if (!selectedSettings) return;
+
+  preferences = normalizePreferences({
+    ...preferences,
+    ...selectedSettings,
+    performanceProfile: profile
+  });
+  syncPreferenceState();
+  savePreferences();
+  makeMenu();
+  applyLeanMode(mainWindow);
+
+  // Image/video interception happens before content reaches the DOM; a reload is
+  // needed when switching a whole profile, but not for ordinary CSS preferences.
+  if (mainWindow && !mainWindow.isDestroyed()) mainWindow.reload();
 }
 
 function makeMenu() {
@@ -230,8 +264,27 @@ function makeMenu() {
       label: "Performance",
       submenu: [
         {
+          type: "radio",
+          label: "Extreme Lite — block all images + recognized video",
+          checked: performanceProfile === "extreme-lite",
+          click: () => setPerformanceProfile("extreme-lite")
+        },
+        {
+          type: "radio",
+          label: "Balanced — allow still images, block obvious GIF/video",
+          checked: performanceProfile === "balanced",
+          click: () => setPerformanceProfile("balanced")
+        },
+        {
+          type: "radio",
+          label: "Custom — use individual settings",
+          checked: performanceProfile === "custom",
+          click: () => setPerformanceProfile("custom")
+        },
+        { type: "separator" },
+        {
           type: "checkbox",
-          label: "Ultra-Lite mode — block images and video (voice audio stays enabled)",
+          label: "Block all images + recognized video (Custom setting)",
           checked: textOnlyModeEnabled,
           click: (item) => setPreference("textOnlyMode", item.checked)
         },
@@ -267,8 +320,8 @@ function makeMenu() {
         },
         { type: "separator" },
         {
-          label: "Show current memory snapshot",
-          click: () => showMemorySnapshot()
+          label: "Sample CPU + memory for 5 seconds",
+          click: () => { void showMemorySnapshot(); }
         }
       ]
     },
@@ -321,6 +374,7 @@ function installTextOnlyResourceBlocking(discordSession) {
     (details, callback) => {
       const cancel = shouldBlockHeavyResource(details, {
         enabled: textOnlyModeEnabled,
+        profile: performanceProfile,
         mainWebContentsId: mainWindow?.webContents.id,
         currentUrl: mainWindow?.webContents.getURL()
       });
@@ -329,7 +383,11 @@ function installTextOnlyResourceBlocking(discordSession) {
   );
 }
 
-function showMemorySnapshot() {
+async function showMemorySnapshot() {
+  // app.getAppMetrics() measures CPU between consecutive calls. This five-second
+  // sample runs only when the user opens the diagnostic from the menu.
+  app.getAppMetrics();
+  await new Promise((resolve) => setTimeout(resolve, 5000));
   const metrics = app.getAppMetrics();
   const workingSetMiB = metrics.reduce((sum, metric) => {
     return sum + Number(metric.memory?.workingSetSize || 0) / 1024;
@@ -337,16 +395,20 @@ function showMemorySnapshot() {
   const privateMiB = metrics.reduce((sum, metric) => {
     return sum + Number(metric.memory?.privateBytes || 0) / (1024 * 1024);
   }, 0);
+  const cpuPercent = metrics.reduce((sum, metric) => {
+    return sum + Number(metric.cpu?.percentCPUUsage || 0);
+  }, 0);
   const processLines = metrics.map((metric) => {
     const ws = Number(metric.memory?.workingSetSize || 0) / 1024;
-    return `${metric.type || "process"} (PID ${metric.pid}): ${ws.toFixed(1)} MiB`;
+    const cpu = Number(metric.cpu?.percentCPUUsage || 0);
+    return `${metric.type || "process"} (PID ${metric.pid}): ${ws.toFixed(1)} MiB, ${cpu.toFixed(1)}% CPU`;
   }).join("\n");
 
   const options = {
     type: "info",
-    title: "SweetCord memory snapshot",
-    message: `Working set total: ${workingSetMiB.toFixed(1)} MiB across ${metrics.length} Electron processes`,
-    detail: `Private memory total: ${privateMiB.toFixed(1)} MiB\n\n${processLines}\n\nThis is a diagnostic snapshot, not a hard 1 GiB cap. Windows may report shared memory differently from Task Manager's app grouping.`,
+    title: "SweetCord resource snapshot (5 seconds)",
+    message: `Working set: ${workingSetMiB.toFixed(1)} MiB · Private memory: ${privateMiB.toFixed(1)} MiB`,
+    detail: `Summed process CPU over the sample: ${cpuPercent.toFixed(1)}% (can exceed 100% across cores)\nProcesses sampled: ${metrics.length}\n\n${processLines}\n\nThis is a short diagnostic sample, not a hard RAM cap. GPU utilization and GPU memory must be checked separately in Windows Task Manager.`,
     buttons: ["OK"],
     noLink: true
   };
@@ -432,11 +494,7 @@ function createMainWindow(discordSession) {
 
 app.whenReady().then(() => {
   preferences = loadPreferences();
-  leanModeEnabled = preferences.leanMode;
-  reduceMotionEnabled = preferences.reduceMotion;
-  hideProfileDecorationsEnabled = preferences.hideProfileDecorations;
-  staticAnimatedAvatarsEnabled = preferences.staticAnimatedAvatars;
-  textOnlyModeEnabled = preferences.textOnlyMode;
+  syncPreferenceState();
 
   // Discord's website owns authentication and session data. The persistent
   // partition keeps its normal web session between launches; no token field
