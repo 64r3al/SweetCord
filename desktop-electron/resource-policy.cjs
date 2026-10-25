@@ -28,6 +28,10 @@ function shouldBlockHeavyResource(details, options = {}) {
     if (activeUrl.protocol !== "https:" || !hostMatches(activeUrl.hostname, DISCORD_HOSTS)) {
       return false;
     }
+    // Keep login, OAuth, verification, and account recovery pages functional.
+    if (/^\/(login|register|oauth2|verify|email-verification|reset-password|logout)(\/|$)/i.test(activeUrl.pathname)) {
+      return false;
+    }
   } catch {
     return false;
   }
