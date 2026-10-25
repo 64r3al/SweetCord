@@ -80,7 +80,7 @@ const LEAN_STYLES = [
   'html.sweetcord-text-only-mode #app-mount button[aria-label*="gif" i],',
   'html.sweetcord-text-only-mode #app-mount button[aria-label*="sticker" i],',
   'html.sweetcord-text-only-mode #app-mount button[aria-label*="nitro" i],',
-  'html.sweetcord-text-only-mode #app-mount button[aria-label*="gift" i]'
+  'html.sweetcord-text-only-mode #app-mount button[aria-label*="gift" i]',
   '{ display: none !important; }',
 ].join("\n");
 
