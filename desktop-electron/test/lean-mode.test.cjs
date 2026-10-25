@@ -8,7 +8,8 @@ const defaults = {
   leanMode: true,
   reduceMotion: true,
   hideProfileDecorations: true,
-  staticAnimatedAvatars: true
+  staticAnimatedAvatars: true,
+  textOnlyMode: true
 };
 
 test("generated browser injection is valid JavaScript", () => {
@@ -21,7 +22,9 @@ test("all performance preferences are represented in the generated injection", (
   assert.match(source, /sweetcord-lean-mode/);
   assert.match(source, /sweetcord-reduced-motion/);
   assert.match(source, /sweetcord-trim-profile-decorations/);
+  assert.match(source, /sweetcord-text-only-mode/);
   assert.match(source, /staticAnimatedAvatars/);
+  assert.match(source, /"textOnlyMode":true/);
 });
 
 test("avatar processing is batched and avoids repeat full-document scans", () => {
@@ -42,9 +45,20 @@ test("overlapping queued DOM subtrees are processed only from outermost nodes", 
 test("disabling static avatars generates a reversible configuration", () => {
   const source = buildLeanModeScript({ ...defaults, staticAnimatedAvatars: false });
   assert.match(source, /"staticAnimatedAvatars":false/);
+  assert.match(source, /"textOnlyMode":false/);
   assert.match(source, /data-sweetcord-original-src/);
   assert.match(source, /data-sweetcord-static-src/);
   assert.match(source, /data-sweetcord-static-failed-src/);
+});
+
+
+test("text-only mode hides high-cost media and exits before avatar observer setup", () => {
+  const source = buildLeanModeScript(defaults);
+  assert.match(source, /#app-mount img/);
+  assert.match(source, /\[class\*="gif" i\]/);
+  assert.match(source, /\[class\*="sticker" i\]/);
+  assert.match(source, /\[class\*="embed" i\]/);
+  assert.ok(source.indexOf("if (cfg.textOnlyMode)") < source.indexOf("const avatarSelector"));
 });
 
 test("missing preferences safely default to disabled values", () => {
@@ -54,4 +68,5 @@ test("missing preferences safely default to disabled values", () => {
   assert.match(source, /"reduceMotion":false/);
   assert.match(source, /"hideProfileDecorations":false/);
   assert.match(source, /"staticAnimatedAvatars":false/);
+  assert.match(source, /"textOnlyMode":false/);
 });
