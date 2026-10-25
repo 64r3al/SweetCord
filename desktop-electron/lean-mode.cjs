@@ -105,7 +105,7 @@ function buildLeanModeScript(settings) {
     'root.classList.toggle("sweetcord-reduced-motion", cfg.reduceMotion);',
     'root.classList.toggle("sweetcord-trim-profile-decorations", cfg.hideProfileDecorations);',
     'root.classList.toggle("sweetcord-text-only-mode", cfg.textOnlyMode);',
-    'root.classList.add("sweetcord-voice-only-mode");'
+    'root.classList.add("sweetcord-voice-only-mode");',
     'if (cfg.textOnlyMode) { if (window.__sweetCordAvatarObserver) { window.__sweetCordAvatarObserver.disconnect(); window.__sweetCordAvatarObserver = null; window.__sweetCordAvatarObserverInstalled = false; } return; }',
     'const previousStaticState = window.__sweetCordStaticAvatarState;',
     'window.__sweetCordStaticAvatarState = cfg.staticAnimatedAvatars;',
