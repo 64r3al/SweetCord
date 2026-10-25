@@ -265,6 +265,11 @@ function makeMenu() {
         {
           label: "Reload to apply interface changes",
           click: () => mainWindow?.reload()
+        },
+        { type: "separator" },
+        {
+          label: "Show current memory snapshot",
+          click: () => showMemorySnapshot()
         }
       ]
     },
@@ -335,6 +340,34 @@ function installTextOnlyResourceBlocking(discordSession) {
       callback({ cancel });
     }
   );
+}
+
+function showMemorySnapshot() {
+  const metrics = app.getAppMetrics();
+  const workingSetMiB = metrics.reduce((sum, metric) => {
+    return sum + Number(metric.memory?.workingSetSize || 0) / 1024;
+  }, 0);
+  const privateMiB = metrics.reduce((sum, metric) => {
+    return sum + Number(metric.memory?.privateBytes || 0) / (1024 * 1024);
+  }, 0);
+  const processLines = metrics.map((metric) => {
+    const ws = Number(metric.memory?.workingSetSize || 0) / 1024;
+    return `${metric.type || "process"} (PID ${metric.pid}): ${ws.toFixed(1)} MiB`;
+  }).join("\\n");
+
+  const options = {
+    type: "info",
+    title: "SweetCord memory snapshot",
+    message: `Working set total: ${workingSetMiB.toFixed(1)} MiB across ${metrics.length} Electron processes`,
+    detail: `Private memory total: ${privateMiB.toFixed(1)} MiB\\n\\n${processLines}\\n\\nThis is a diagnostic snapshot, not a hard 1 GiB cap. Windows may report shared memory differently from Task Manager's app grouping.`,
+    buttons: ["OK"],
+    noLink: true
+  };
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    void dialog.showMessageBox(mainWindow, options);
+  } else {
+    void dialog.showMessageBox(options);
+  }
 }
 
 function createMainWindow(discordSession) {
