@@ -33,6 +33,10 @@ test("text-only mode does not block images on OAuth or non-Discord pages", () =>
     { webContentsId: 12, resourceType: "image" },
     { ...options, currentUrl: "https://accounts.google.com/" }
   ), false);
+  assert.equal(shouldBlockHeavyResource(
+    { webContentsId: 12, resourceType: "image" },
+    { ...options, currentUrl: "https://discord.com/login" }
+  ), false);
 });
 
 test("turning text-only mode off allows image and media requests again", () => {
