@@ -9,14 +9,15 @@
 
 ## Discord-backed desktop experiment
 
-The repository now also includes a separate **Electron desktop shell** that opens Discord's own web app. This is the closest architecture match to the account-and-voice goal: Discord itself provides the signed-in user's servers, messages, and calls, instead of SweetCord rebuilding those systems.
+The repository includes a stable-in-place **Electron desktop shell** and a separate experimental **Tauri/WebView2 shell**; both open Discord's own web app. This is the closest architecture match to the account-and-voice goal: Discord itself provides the signed-in user's servers, messages, and calls, instead of SweetCord rebuilding those systems.
 
 - Run it on Windows with [Launch SweetCord Desktop.bat](Launch%20SweetCord%20Desktop.bat).
-- Desktop source and instructions: [desktop-electron/README.md](desktop-electron/README.md).
+- Electron source, performance settings and regression tests: [desktop-electron/README.md](desktop-electron/README.md).
+- Experimental Tauri/WebView2 build and testing checklist: [desktop-tauri/README.md](desktop-tauri/README.md). The Tauri installer is built as a CI artifact and does not replace the Electron release.
 - Sign in only on Discord's official page; SweetCord does not offer a paste-token form.
-- The desktop shell has a configurable ultra-low-effects profile: hides common promo destinations, disables UI transitions, removes decorative profile layers, and can replace animated avatar GIFs with static PNGs.
+- The Electron shell has a configurable ultra-low-effects profile. Its avatar observer batches work and scans all avatars only when necessary; failed static-image conversions fall back without repeatedly retrying.
 - It keeps GPU acceleration and call/media permissions enabled. These changes are compatibility best-effort; no fixed RAM/CPU/GPU savings are claimed until measured on real PCs.
-- The original React/Supabase SweetCord app remains available via [Launch SweetCord.bat](Launch%20SweetCord.bat).
+- The Tauri/WebView2 preview is experimental until login, voice/video, and resource use are verified on real hardware. Neither desktop variant guarantees 200 MB RAM. The original React/Supabase SweetCord app remains available via [Launch SweetCord.bat](Launch%20SweetCord.bat).
 
 > Important: third-party Discord client modifications may violate Discord's Terms of Service and can carry account risk. SweetCord is unofficial and not affiliated with Discord.
 
@@ -31,14 +32,14 @@ The repository now also includes a separate **Electron desktop shell** that open
 - **Responsive UI:** dark interface designed for desktop first and usable on small screens.
 - **Access rules:** separate SQL schema adds row-level security (RLS) for workspaces, memberships, conversations and messages.
 
-**For the original React/Supabase web app:** voice calls, voice-channel transport, file uploads, server invite links/discovery, moderation/reporting tools, and the Tauri desktop build remain unimplemented. The new Electron shell is a separate experiment that uses Discord's web app directly, so it does not depend on the SweetCord Supabase project for Discord's existing chats.
+**For the original React/Supabase web app:** voice calls, voice-channel transport, file uploads, server invite links/discovery, and moderation/reporting tools remain unimplemented. The Tauri shell is a separate wrapper for Discord's existing web app, not native SweetCord voice transport. The new Electron shell is a separate experiment that uses Discord's web app directly, so it does not depend on the SweetCord Supabase project for Discord's existing chats.
 
 ## Tech stack
 
 - React + TypeScript + Vite
 - Supabase Auth, Postgres RLS and Realtime
 - Official Discord OAuth provider configured in Supabase
-- Tauri 2 and low-overhead voice transport remain future work
+- Tauri 2 WebView2 wrapper experiment; low-overhead native voice transport remains future work for the original SweetCord app
 
 ## Run locally
 

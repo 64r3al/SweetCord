@@ -3,7 +3,6 @@ setlocal EnableExtensions
 title SweetCord Desktop
 cd /d "%~dp0"
 set "DESKTOP_DIR=%~dp0desktop-electron"
-set "LOG_FILE=%~dp0sweetcord-desktop-launch.log"
 
 echo.
 echo  ========================================
@@ -84,8 +83,6 @@ if not exist "node_modules\electron\dist\electron.exe" (
 echo.
 echo [START] Starting SweetCord Desktop...
 echo [INFO] Electron runtime is present.
-echo [INFO] Runtime output will also be saved to:
-echo        "%LOG_FILE%"
 echo.
 call npm.cmd start
 set "APP_EXIT_CODE=%ERRORLEVEL%"
@@ -93,7 +90,6 @@ if not "%APP_EXIT_CODE%"=="0" (
   echo.
   echo [FAILED] SweetCord Desktop exited with code %APP_EXIT_CODE%.
   echo If the window never appeared, copy the error text above.
-  echo Log file from previous launch, if present: "%LOG_FILE%"
   pause
 )
 popd

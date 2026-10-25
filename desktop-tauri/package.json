@@ -1,0 +1,15 @@
+{
+  "name": "sweetcord-tauri-preview",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Experimental SweetCord WebView2 desktop shell",
+  "scripts": {
+    "tauri": "tauri",
+    "tauri:icon": "node scripts/create-icon.cjs",
+    "tauri:dev": "npm run tauri:icon && tauri dev",
+    "tauri:build": "npm run tauri:icon && tauri build"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2.8.4"
+  }
+}

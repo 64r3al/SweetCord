@@ -29,10 +29,6 @@ button:focus-visible, a:focus-visible { outline: 2px solid #c5b8ff; outline-offs
     radial-gradient(ellipse at 15% 55%, rgba(96, 64, 173, .14), transparent 40%),
     radial-gradient(ellipse at 88% 25%, rgba(59, 71, 137, .12), transparent 38%), var(--bg);
 }
-.ambient { position: absolute; z-index: -2; border-radius: 999px; filter: blur(105px); opacity: .24; pointer-events: none; }
-.ambient-one { width: 360px; height: 360px; background: #6546b8; top: 23%; left: 17%; }
-.ambient-two { width: 300px; height: 300px; background: #2a4c89; right: 8%; bottom: 12%; opacity: .14; }
-.grid-overlay { position: absolute; inset: 0; z-index: -1; pointer-events: none; opacity: .2; background-image: linear-gradient(rgba(255,255,255,.025) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.025) 1px, transparent 1px); background-size: 54px 54px; mask-image: linear-gradient(to bottom, black, transparent 92%); }
 
 .topbar { height: 94px; display: flex; align-items: center; border-bottom: 1px solid rgba(255,255,255,.065); gap: 28px; }
 .wordmark, .preview-brand { display: inline-flex; align-items: center; gap: 11px; font-family: ui-sans-serif, system-ui, 'Segoe UI', sans-serif; font-size: 20px; font-weight: 700; letter-spacing: -.7px; }
@@ -1000,12 +996,6 @@ button, a {
     scroll-behavior: auto !important;
     transition-duration: .01ms !important;
   }
-}
-
-/* Low-overhead mode: keep surfaces attractive without expensive live blur or scroll animation. */
-.ambient {
-  filter: none !important;
-  opacity: 0 !important;
 }
 
 .sc-app-shell .sc-sidepanel-header,

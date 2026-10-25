@@ -1,10 +1,5 @@
 name: SweetCord desktop shell
 
-# A single writer prevents concurrent builds from racing on the mutable nightly tag/release asset.
-concurrency:
-  group: sweetcord-nightly-release
-  cancel-in-progress: false
-
 on:
   push:
     paths:
@@ -19,48 +14,77 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   windows-package:
+    if: github.ref == 'refs/heads/main' || github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch'
     runs-on: windows-latest
     steps:
       - name: Check out source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: npm
           cache-dependency-path: desktop-electron/package.json
 
       - name: Check JavaScript syntax
-        run: node --check desktop-electron/main.cjs
+        run: |
+          node --check desktop-electron/main.cjs
+          node --check desktop-electron/lean-mode.cjs
+          node --check desktop-electron/test/lean-mode.test.cjs
 
       - name: Install desktop dependencies
         run: npm install --prefix desktop-electron
+
+      - name: Run lean-mode regression tests
+        run: npm test --prefix desktop-electron
 
       - name: Build Windows installer
         run: npm run package:win --prefix desktop-electron
 
       - name: Upload Windows installer
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: SweetCord-Windows-Installer
           path: desktop-electron/release/*.exe
           if-no-files-found: error
           retention-days: 14
 
+  publish-nightly:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: windows-package
+    runs-on: ubuntu-latest
+    # Serialize only the writer of the mutable nightly tag/release; PR builds can run in parallel.
+    concurrency:
+      group: sweetcord-nightly-release
+      cancel-in-progress: false
+    permissions:
+      contents: write
+    steps:
+      - name: Check out source for tagging
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: true
+
+      - name: Download Windows installer artifact
+        uses: actions/download-artifact@v8
+        with:
+          name: SweetCord-Windows-Installer
+          path: desktop-electron/release
+
       - name: Move nightly tag to this build
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         shell: bash
         run: |
           git tag -f nightly "$GITHUB_SHA"
           git push origin refs/tags/nightly --force
 
       - name: Publish the downloadable Windows preview
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: nightly
@@ -71,7 +95,7 @@ jobs:
 
             Download the Windows installer below, run it, and sign in on Discord's official page.
 
-            This app wraps Discord's own web app in a SweetCord-branded Electron window. The optional promotional/navigation hiding is best-effort and may need updates as Discord changes its interface. CPU, RAM, and GPU savings have not yet been independently benchmarked across PCs.
+            This app wraps Discord's own web app in a SweetCord-branded Electron window. Its performance profile reduces decorative effects and batches avatar handling, but CSS/CDN tweaks are best-effort and may need updates as Discord changes. No fixed CPU, RAM, or GPU savings are guaranteed; compare locally on the same hardware.
 
             SweetCord is an unofficial third-party client and is not affiliated with Discord. Third-party client modifications may carry account and Terms of Service risks.
           prerelease: true

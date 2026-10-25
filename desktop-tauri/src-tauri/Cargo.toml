@@ -1,0 +1,14 @@
+[package]
+name = "sweetcord-tauri-preview"
+version = "0.1.0"
+description = "Experimental SweetCord WebView2 desktop shell"
+authors = ["SweetCord contributors"]
+edition = "2021"
+rust-version = "1.90"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+tauri-plugin-opener = "2"

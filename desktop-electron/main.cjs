@@ -10,6 +10,7 @@ const {
 } = require("electron");
 const { existsSync, readFileSync, writeFileSync } = require("node:fs");
 const path = require("node:path");
+const { buildLeanModeScript } = require("./lean-mode.cjs");
 const DISCORD_START_URL = "https://discord.com/app";
 const DISCORD_HOSTS = ["discord.com", "discord.gg", "discordapp.com", "discordapp.net"];
 const OAUTH_HOSTS = [
@@ -92,73 +93,12 @@ function attachNavigationPolicy(window) {
   });
 }
 
-const LEAN_STYLE_ID = "sweetcord-lean-mode-style";
 const DEFAULT_PREFERENCES = Object.freeze({
   leanMode: true,
   reduceMotion: true,
   hideProfileDecorations: true,
   staticAnimatedAvatars: true
 });
-
-const LEAN_STYLES = [
-  /* Optional navigation destinations. Scoped to the toggle so it is reversible. */
-  'html.sweetcord-lean-mode #app-mount a[href="/store"],',
-  'html.sweetcord-lean-mode #app-mount a[href^="/store/"],',
-  'html.sweetcord-lean-mode #app-mount a[href="/shop"],',
-  'html.sweetcord-lean-mode #app-mount a[href^="/shop/"],',
-  'html.sweetcord-lean-mode #app-mount a[href="/quests"],',
-  'html.sweetcord-lean-mode #app-mount a[href^="/quests/"],',
-  'html.sweetcord-lean-mode #app-mount a[href="/quest-home"],',
-  'html.sweetcord-lean-mode #app-mount a[href^="/quest-home/"],',
-  'html.sweetcord-lean-mode #app-mount a[href="/nitro"],',
-  'html.sweetcord-lean-mode #app-mount a[href^="/nitro/"],',
-  'html.sweetcord-lean-mode #app-mount a[href="/discovery"],',
-  'html.sweetcord-lean-mode #app-mount a[href^="/discovery/"],',
-  'html.sweetcord-lean-mode #app-mount a[href="/guild-discovery"],',
-  'html.sweetcord-lean-mode #app-mount a[href^="/guild-discovery/"],',
-  'html.sweetcord-lean-mode #app-mount [data-list-item-id^="shop" i],',
-  'html.sweetcord-lean-mode #app-mount [data-list-item-id^="quests" i],',
-  'html.sweetcord-lean-mode #app-mount [data-list-item-id^="nitro" i],',
-  'html.sweetcord-lean-mode #app-mount [data-list-item-id^="store" i],',
-  'html.sweetcord-lean-mode #app-mount [role="listitem"]:has(> a[href="/store"]),',
-  'html.sweetcord-lean-mode #app-mount [role="listitem"]:has(> a[href="/shop"]),',
-  'html.sweetcord-lean-mode #app-mount [role="listitem"]:has(> a[href="/quests"]),',
-  'html.sweetcord-lean-mode #app-mount [role="listitem"]:has(> a[href="/quest-home"]),',
-  'html.sweetcord-lean-mode #app-mount [role="listitem"]:has(> a[href="/nitro"]),',
-  'html.sweetcord-lean-mode #app-mount [role="listitem"]:has(> a[href="/discovery"]),',
-  'html.sweetcord-lean-mode #app-mount [role="listitem"]:has(> a[href="/guild-discovery"])',
-  '{ display: none !important; }',
-
-  /* Promotion cards: narrowly target known UI naming conventions. */
-  'html.sweetcord-lean-mode #app-mount [class*="promo" i],',
-  'html.sweetcord-lean-mode #app-mount [class*="nitroUpsell" i],',
-  'html.sweetcord-lean-mode #app-mount [class*="premiumPromo" i],',
-  'html.sweetcord-lean-mode #app-mount [class*="questHome" i],',
-  'html.sweetcord-lean-mode #app-mount [class*="questCard" i],',
-  'html.sweetcord-lean-mode #app-mount [class*="shopUpsell" i],',
-  'html.sweetcord-lean-mode #app-mount [class*="nitroBanner" i]',
-  '{ display: none !important; }',
-
-  /* Avoid expensive blur/compositing on decorative surfaces. */
-  'html.sweetcord-lean-mode #app-mount [class*="backdrop" i],',
-  'html.sweetcord-lean-mode #app-mount [class*="blur" i]',
-  '{ -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }',
-
-  /* Disable decorative hover/entrance motion, but do not hide call or media controls. */
-  'html.sweetcord-reduced-motion #app-mount *,',
-  'html.sweetcord-reduced-motion #app-mount *::before,',
-  'html.sweetcord-reduced-motion #app-mount *::after',
-  '{ animation: none !important; transition: none !important; scroll-behavior: auto !important; }',
-
-  /* Preserve real user avatars by default; trim only paid/decorative profile layers. */
-  'html.sweetcord-trim-profile-decorations #app-mount [class*="profileBanner" i],',
-  'html.sweetcord-trim-profile-decorations #app-mount [class*="profileEffect" i],',
-  'html.sweetcord-trim-profile-decorations #app-mount [class*="profileEffects" i],',
-  'html.sweetcord-trim-profile-decorations #app-mount [class*="avatarDecoration" i],',
-  'html.sweetcord-trim-profile-decorations #app-mount [class*="profileDecoration" i],',
-  'html.sweetcord-trim-profile-decorations #app-mount [class*="profilePremium" i]',
-  '{ display: none !important; }'
-].join("\n");
 
 let preferences = { ...DEFAULT_PREFERENCES };
 let leanModeEnabled = DEFAULT_PREFERENCES.leanMode;
@@ -201,60 +141,7 @@ function applyLeanMode(window) {
     hideProfileDecorations: hideProfileDecorationsEnabled,
     staticAnimatedAvatars: staticAnimatedAvatarsEnabled
   };
-  const script = "(() => {"
-    + "const cfg = " + JSON.stringify(settings) + ";"
-    + "const id = " + JSON.stringify(LEAN_STYLE_ID) + ";"
-    + "const css = " + JSON.stringify(LEAN_STYLES) + ";"
-    + "let style = document.getElementById(id);"
-    + "if (!style) { style = document.createElement('style'); style.id = id; (document.head || document.documentElement).appendChild(style); }"
-    + "style.textContent = css;"
-    + "const root = document.documentElement;"
-    + "root.classList.toggle('sweetcord-lean-mode', cfg.leanMode);"
-    + "root.classList.toggle('sweetcord-reduced-motion', cfg.reduceMotion);"
-    + "root.classList.toggle('sweetcord-trim-profile-decorations', cfg.hideProfileDecorations);"
-    + "root.classList.toggle('sweetcord-static-animated-avatars', cfg.staticAnimatedAvatars);"
-    + "const normalizeAvatar = (img) => {"
-    + "if (!(img instanceof HTMLImageElement)) return;"
-    + "const source = img.getAttribute('src') || '';"
-    + "const isAnimatedAvatar = /\\/avatars\\/[^/]+\\/a_[^/?#]+\\.gif(?:[?#]|$)/i.test(source);"
-    + "if (root.classList.contains('sweetcord-static-animated-avatars') && isAnimatedAvatar) {"
-    + "if (!img.hasAttribute('data-sweetcord-original-src')) img.setAttribute('data-sweetcord-original-src', source);"
-    + "if (!img.hasAttribute('data-sweetcord-original-srcset')) img.setAttribute('data-sweetcord-original-srcset', img.getAttribute('srcset') || '');"
-    + "img.removeAttribute('srcset');"
-    + "const stillSource = source.replace(/\\.gif(?=([?#]|$))/i, '.png');"
-    + "if (img.getAttribute('src') !== stillSource) {"
-    + "img.addEventListener('error', () => {"
-    + "const original = img.getAttribute('data-sweetcord-original-src');"
-    + "if (original) { img.setAttribute('src', original); const oldSet = img.getAttribute('data-sweetcord-original-srcset') || ''; if (oldSet) img.setAttribute('srcset', oldSet); else img.removeAttribute('srcset'); img.removeAttribute('data-sweetcord-original-src'); img.removeAttribute('data-sweetcord-original-srcset'); }"
-    + "}, { once: true });"
-    + "img.setAttribute('src', stillSource);"
-    + "}"
-    + "} else if (!root.classList.contains('sweetcord-static-animated-avatars') && img.hasAttribute('data-sweetcord-original-src')) {"
-    + "img.setAttribute('src', img.getAttribute('data-sweetcord-original-src'));"
-    + "const originalSrcset = img.getAttribute('data-sweetcord-original-srcset') || '';"
-    + "if (originalSrcset) img.setAttribute('srcset', originalSrcset); else img.removeAttribute('srcset');"
-    + "img.removeAttribute('data-sweetcord-original-src');"
-    + "img.removeAttribute('data-sweetcord-original-srcset');"
-    + "}"
-    + "};"
-    + "const processTree = (node) => {"
-    + "if (node instanceof HTMLImageElement) normalizeAvatar(node);"
-    + "if (node && node.querySelectorAll) node.querySelectorAll('img[src*=\"/avatars/\"]').forEach(normalizeAvatar);"
-    + "};"
-    + "if (!window.__sweetCordAvatarObserverInstalled) {"
-    + "processTree(document);"
-    + "const observer = new MutationObserver((records) => {"
-    + "for (const record of records) {"
-    + "if (record.type === 'attributes') { normalizeAvatar(record.target); continue; }"
-    + "for (const node of record.addedNodes) processTree(node);"
-    + "}"
-    + "});"
-    + "observer.observe(document.documentElement, { childList: true, subtree: true, attributes: true, attributeFilter: ['src'] });"
-    + "window.__sweetCordAvatarObserverInstalled = true;"
-    + "} else {"
-    + "document.querySelectorAll('img[src*=\"/avatars/\"], img[data-sweetcord-original-src]').forEach(normalizeAvatar);"
-    + "}"
-    + "})();";
+  const script = buildLeanModeScript(settings);
 
   window.webContents.executeJavaScript(script, true).catch(() => {
     // Navigation may destroy the document during injection; the next load applies it again.
@@ -262,10 +149,9 @@ function applyLeanMode(window) {
 }
 
 function installLeanModeHooks(window) {
-  const apply = () => applyLeanMode(window);
-  window.webContents.on("dom-ready", apply);
-  window.webContents.on("did-finish-load", apply);
-  window.webContents.on("did-navigate-in-page", apply);
+  // Apply once per loaded document. Discord SPA route changes keep the document alive,
+  // and the MutationObserver handles new UI; preference changes call applyLeanMode directly.
+  window.webContents.on("dom-ready", () => applyLeanMode(window));
 }
 
 function setPreference(name, enabled) {

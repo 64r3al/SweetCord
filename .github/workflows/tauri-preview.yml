@@ -1,0 +1,79 @@
+name: SweetCord Tauri / WebView2 experiment
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "desktop-tauri/**"
+      - ".github/workflows/tauri-preview.yml"
+  pull_request:
+    paths:
+      - "desktop-tauri/**"
+      - ".github/workflows/tauri-preview.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sweetcord-tauri-preview-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  windows-tauri-preview:
+    if: github.ref == 'refs/heads/main' || github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch'
+    runs-on: windows-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Install stable Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Rust build output
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: desktop-tauri/src-tauri -> target
+
+      - name: Check Tauri injected JavaScript syntax
+        run: |
+          node --check desktop-tauri/lean-mode.js
+          node --check desktop-tauri/test/lean-mode.test.cjs
+
+      - name: Run Tauri lean-mode regression tests
+        run: node --test desktop-tauri/test/lean-mode.test.cjs
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: desktop-tauri/package.json
+
+      - name: Install Tauri CLI
+        run: npm install --prefix desktop-tauri --no-audit --no-fund
+
+      - name: Validate Tauri config JSON
+        shell: pwsh
+        run: |
+          $null = Get-Content desktop-tauri/src-tauri/tauri.conf.json -Raw | ConvertFrom-Json
+          $null = Get-Content desktop-tauri/package.json -Raw | ConvertFrom-Json
+
+      - name: Generate Windows application icon
+        run: npm run tauri:icon --prefix desktop-tauri
+
+      - name: Test Tauri URL allowlist
+        run: cargo test --manifest-path desktop-tauri/src-tauri/Cargo.toml
+
+      - name: Build experimental Windows installer
+        run: npm run tauri:build --prefix desktop-tauri
+
+      - name: Upload experimental installer
+        uses: actions/upload-artifact@v7
+        with:
+          name: SweetCord-Tauri-WebView2-Preview
+          path: desktop-tauri/src-tauri/target/release/bundle/nsis/*.exe
+          if-no-files-found: error
+          retention-days: 14

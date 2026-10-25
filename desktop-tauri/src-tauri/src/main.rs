@@ -1,0 +1,148 @@
+#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+
+use std::io;
+use tauri::webview::{
+    NewWindowResponse, PermissionKind, PermissionResponse, Webview, WebviewWindowBuilder,
+};
+use tauri::{AppHandle, Url};
+
+const DISCORD_HOSTS: &[&str] = &[
+    "discord.com",
+    "discord.gg",
+    "discordapp.com",
+    "discordapp.net",
+];
+const IDENTITY_HOSTS: &[&str] = &[
+    "accounts.google.com",
+    "appleid.apple.com",
+    "github.com",
+    "id.twitch.tv",
+    "login.live.com",
+    "login.microsoftonline.com",
+    "steamcommunity.com",
+    "accounts.spotify.com",
+    "epicgames.com",
+    "xbox.com",
+];
+const LEAN_SCRIPT: &str = include_str!("../../lean-mode.js");
+
+fn host_matches(host: &str, domains: &[&str]) -> bool {
+    let host = host.to_ascii_lowercase();
+    domains.iter().any(|domain| host == *domain || host.ends_with(&format!(".{domain}")))
+}
+
+fn is_discord_host(host: &str) -> bool {
+    host_matches(host, DISCORD_HOSTS)
+}
+
+fn is_trusted_url(url: &Url) -> bool {
+    if url.scheme() != "https" {
+        return false;
+    }
+    let host = match url.host_str() {
+        Some(host) => host,
+        None => return false,
+    };
+    is_discord_host(host) || host_matches(host, IDENTITY_HOSTS)
+}
+
+fn open_external(app: &AppHandle, url: &Url) {
+    use tauri_plugin_opener::OpenerExt;
+
+    if !matches!(url.scheme(), "https" | "http" | "mailto") {
+        return;
+    }
+    if let Err(error) = app.opener().open_url(url.as_str(), None::<&str>) {
+        eprintln!("SweetCord could not open external link: {error}");
+    }
+}
+
+fn permission_response(webview: Webview<tauri::Wry>, kind: PermissionKind) -> PermissionResponse {
+    let trusted_origin = webview
+        .url()
+        .ok()
+        .and_then(|url| url.host_str().map(str::to_owned))
+        .map(|host| is_discord_host(&host))
+        .unwrap_or(false);
+
+    if !trusted_origin {
+        return PermissionResponse::Deny;
+    }
+
+    match kind {
+        PermissionKind::Microphone
+        | PermissionKind::Camera
+        | PermissionKind::DisplayCapture
+        | PermissionKind::Notifications
+        | PermissionKind::Autoplay => PermissionResponse::Default,
+        _ => PermissionResponse::Deny,
+    }
+}
+
+fn main() {
+    tauri::Builder::default()
+        .plugin(tauri_plugin_opener::init())
+        .setup(|app| {
+            let config = app
+                .config()
+                .app
+                .windows
+                .iter()
+                .find(|window| window.label == "main")
+                .cloned()
+                .ok_or_else(|| io::Error::new(io::ErrorKind::NotFound, "missing Tauri main-window configuration"))?;
+
+            let navigation_handle = app.handle().clone();
+            let popup_handle = app.handle().clone();
+
+            WebviewWindowBuilder::from_config(app.handle(), &config)?
+                .devtools(cfg!(debug_assertions))
+                .initialization_script(LEAN_SCRIPT)
+                .on_navigation(move |url| {
+                    if is_trusted_url(url) {
+                        true
+                    } else {
+                        open_external(&navigation_handle, url);
+                        false
+                    }
+                })
+                .on_new_window(move |url, _features| {
+                    if is_trusted_url(&url) {
+                        // Use WebView2's default popup creation to avoid building a native
+                        // window synchronously inside its callback, which can deadlock on Windows.
+                        NewWindowResponse::Allow
+                    } else {
+                        open_external(&popup_handle, &url);
+                        NewWindowResponse::Deny
+                    }
+                })
+                .on_permission_request(permission_response)
+                .build()?;
+
+            Ok(())
+        })
+        .run(tauri::generate_context!())
+        .expect("error while running SweetCord Tauri preview");
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn trusted_host_matching_rejects_suffix_spoofing() {
+        assert!(host_matches("discord.com", DISCORD_HOSTS));
+        assert!(host_matches("cdn.discord.com", DISCORD_HOSTS));
+        assert!(!host_matches("evil-discord.com", DISCORD_HOSTS));
+        assert!(!host_matches("discord.com.evil.example", DISCORD_HOSTS));
+    }
+
+    #[test]
+    fn internal_navigation_requires_https_and_an_allowlisted_host() {
+        assert!(is_trusted_url(&Url::parse("https://discord.com/app").unwrap()));
+        assert!(is_trusted_url(&Url::parse("https://accounts.google.com/").unwrap()));
+        assert!(!is_trusted_url(&Url::parse("http://discord.com/app").unwrap()));
+        assert!(!is_trusted_url(&Url::parse("https://discord.com.evil.example/").unwrap()));
+        assert!(!is_trusted_url(&Url::parse("https://example.com/").unwrap()));
+    }
+}
