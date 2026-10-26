@@ -1,5 +1,6 @@
 param(
-    [string[]]$ProcessName = @("SweetCord", "Discord", "Vesktop"),
+    [string[]]$ProcessName = @("SweetCord"),
+    [bool]$IncludeDescendants = $true,
     [ValidateRange(5, 600)]
     [int]$SampleSeconds = 30,
     [ValidateRange(1, 10)]
@@ -11,23 +12,72 @@ $ErrorActionPreference = "Stop"
 $wantedNames = @($ProcessName | ForEach-Object { $_.Trim().ToLowerInvariant() } | Where-Object { $_ })
 
 if ($wantedNames.Count -eq 0) {
-    throw "Provide at least one process name, e.g. -ProcessName SweetCord,Discord,Vesktop"
+    throw "Provide at least one root process name, e.g. -ProcessName SweetCord"
 }
 if ($IntervalSeconds -ge $SampleSeconds) {
     throw "IntervalSeconds must be shorter than SampleSeconds."
 }
 
 function Get-ProcessSnapshot {
-    param([string[]]$Names)
+    param(
+        [string[]]$Names,
+        [bool]$IncludeDescendants
+    )
 
-    $procs = @(Get-Process -ErrorAction SilentlyContinue | Where-Object {
-        $Names -contains $_.ProcessName.ToLowerInvariant()
-    })
+    # Query parent/child relationships so WebView2/Chromium helper processes
+    # are counted with the selected application instead of mixing in every
+    # unrelated msedgewebview2.exe process on the PC.
+    try {
+        $metadata = @(Get-CimInstance -ClassName Win32_Process -ErrorAction Stop |
+            Select-Object ProcessId, ParentProcessId, Name)
+    } catch {
+        throw ("Could not enumerate the Windows process tree: {0}" -f $_.Exception.Message)
+    }
+
+    $rootIds = [System.Collections.Generic.HashSet[int]]::new()
+    foreach ($item in $metadata) {
+        $baseName = [System.IO.Path]::GetFileNameWithoutExtension([string]$item.Name).ToLowerInvariant()
+        if ($Names -contains $baseName) {
+            [void]$rootIds.Add([int]$item.ProcessId)
+        }
+    }
+
+    if ($rootIds.Count -eq 0) {
+        return @()
+    }
+
+    $targetIds = [System.Collections.Generic.HashSet[int]]::new()
+    foreach ($rootId in $rootIds) { [void]$targetIds.Add([int]$rootId) }
+
+    if ($IncludeDescendants) {
+        $changed = $true
+        while ($changed) {
+            $changed = $false
+            foreach ($item in $metadata) {
+                $processId = [int]$item.ProcessId
+                $parentId = [int]$item.ParentProcessId
+                if ($targetIds.Contains($parentId) -and -not $targetIds.Contains($processId)) {
+                    [void]$targetIds.Add($processId)
+                    $changed = $true
+                }
+            }
+        }
+    }
+
+    $metadataById = @{}
+    foreach ($item in $metadata) { $metadataById[[int]$item.ProcessId] = $item }
+    $targetPidArray = @($targetIds | ForEach-Object { [int]$_ })
+    $procs = @(Get-Process -Id $targetPidArray -ErrorAction SilentlyContinue)
 
     $perProcess = foreach ($process in $procs) {
         try {
+            $parentId = 0
+            if ($metadataById.ContainsKey([int]$process.Id)) {
+                $parentId = [int]$metadataById[[int]$process.Id].ParentProcessId
+            }
             [pscustomobject]@{
                 Id = [int]$process.Id
+                ParentProcessId = $parentId
                 Name = [string]$process.ProcessName
                 CPUSeconds = [double]$process.CPU
                 WorkingSetBytes = [long]$process.WorkingSet64
@@ -66,14 +116,16 @@ function Format-MB {
 
 Write-Host ""
 Write-Host "SweetCord resource benchmark" -ForegroundColor Cyan
-Write-Host ("Process names: {0}" -f ($wantedNames -join ", "))
+Write-Host ("Root process names: {0}" -f ($wantedNames -join ", "))
+Write-Host ("Include descendant processes: {0}" -f $IncludeDescendants)
 Write-Host ("Duration: {0}s · Interval: {1}s · Logical processors: {2}" -f $SampleSeconds, $IntervalSeconds, [Environment]::ProcessorCount)
 Write-Host "Keep the PC and app state unchanged throughout this sample."
 Write-Host "For a fair comparison, repeat at idle, in a text channel, in a voice call, and while minimized during a call."
-Write-Host "GPU counters are not collected by this script; use Task Manager/Process Explorer and include WebView2 child processes for Tauri."
+Write-Host "GPU counters are not collected by this script; use Task Manager > Details and enable GPU + GPU engine columns."
+Write-Host "This sampler follows process descendants, which helps include Electron helpers or WebView2 renderers without counting unrelated Edge tabs."
 Write-Host ""
 
-$baseline = @(Get-ProcessSnapshot -Names $wantedNames)
+$baseline = @(Get-ProcessSnapshot -Names $wantedNames -IncludeDescendants $IncludeDescendants)
 $baselineById = @{}
 foreach ($item in $baseline) { $baselineById[$item.Id] = $item }
 $lastSampleAt = Get-Date
@@ -89,7 +141,7 @@ while ((Get-Date) -lt $stopAt) {
 
     $sampleTime = Get-Date
     $elapsed = [math]::Max(0.1, ($sampleTime - $lastSampleAt).TotalSeconds)
-    $current = @(Get-ProcessSnapshot -Names $wantedNames)
+    $current = @(Get-ProcessSnapshot -Names $wantedNames -IncludeDescendants $IncludeDescendants)
     $cpuDeltaSeconds = 0.0
 
     foreach ($item in $current) {
@@ -145,8 +197,9 @@ $summary | Format-List
 
 Write-Host "Notes:" -ForegroundColor Yellow
 Write-Host "- CPU is averaged across logical processors; it is not a per-core percentage."
-Write-Host "- Memory values sum the selected process names only. Add relevant child process names when comparing wrappers."
-Write-Host "- Tauri/WebView2 may run renderers under msedgewebview2; broad name matching can include unrelated Edge tabs, so isolate the test machine if possible."
+Write-Host "- Memory values sum the selected root process(es) and descendants when IncludeDescendants is true."
+Write-Host "- Compare one application at a time. The sampler does not automatically control unrelated programs that share a root name."
+Write-Host "- Child processes are included by parent PID; a helper that deliberately detaches from the application process tree may still be missed."
 Write-Host "- GPU utilization and dedicated/shared GPU memory are hardware-driver dependent. Record them separately in Task Manager > Details/Performance."
 Write-Host "- This script is a short sampler, not a complete Windows profiler; launch and shutdown spikes may need a separate cold-start test."
 Write-Host "- No telemetry is uploaded. Samples are only saved when OutputPath is supplied."
