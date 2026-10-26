@@ -332,6 +332,8 @@ SweetCord is an independent, unofficial project and is **not affiliated with, en
 
 ## Roadmap
 
+The current desktop performance and access-feasibility work is tracked in the [SweetCord Lite master plan](docs/SWEETCORD-LITE-MASTER-PLAN.md), with a [Discord access-request draft](docs/DISCORD-ACCESS-REQUEST.md) and [repeatable Windows baseline procedure](docs/PERFORMANCE-BASELINE.md). Client customization remains a policy-gated experiment pending explicit written guidance from Discord.
+
 - [ ] Complete and document backend setup and validate account flows with multiple test users.
 - [ ] Add automated integration tests for database permissions and realtime chat.
 - [ ] Improve abuse prevention, account recovery, blocking, reporting, and moderation.
