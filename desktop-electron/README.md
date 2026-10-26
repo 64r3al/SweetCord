@@ -82,4 +82,4 @@ A summed working set can count shared memory more than once; compare private mem
 
 SweetCord never requests a Discord personal account token. Authentication remains in Discord's persistent browser profile. Image/video blocking applies only to the main Discord WebContents, not authentication popups. Microphone permission is limited to HTTPS Discord origins and audio-only requests. Camera and screen capture are denied.
 
-Run `npm test` from `desktop-electron`. CI tests source syntax, request policy and microphone-only permissions and builds the installer. These checks do not replace real Windows login, message and voice-call testing. SweetCord is unofficial and not affiliated with Discord.
+Run `npm test` from `desktop-electron`. CI tests source syntax, request policy and microphone-only permissions and builds the installer. These checks do not replace real Windows login, message and voice-call testing. Follow [`RELEASE-CHECKLIST.md`](RELEASE-CHECKLIST.md) before merging a version-bumping performance change. SweetCord is unofficial and not affiliated with Discord.
