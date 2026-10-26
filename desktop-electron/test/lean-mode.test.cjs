@@ -68,6 +68,7 @@ test("Ultra-Lite includes a dynamic navigation-pruning policy", () => {
   const source = buildLeanModeScript(defaults);
   assert.match(source, /chromeRoutePrefixes/);
   assert.match(source, /data-sweetcord-hidden/);
+  assert.match(source, /data-sweetcord-pruned/);
   assert.match(source, /__sweetCordChromePruneObserverInstalled/);
   assert.ok(source.includes("/quests"));
   assert.ok(source.includes("/shop"));
