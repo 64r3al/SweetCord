@@ -61,6 +61,29 @@ jobs:
           }
           Write-Host "PowerShell benchmark syntax OK"
 
+      - name: Smoke-test benchmark sampling and report output
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $testDir = Join-Path $env:RUNNER_TEMP "sweetcord-benchmark-smoke"
+          New-Item -ItemType Directory -Path $testDir -Force | Out-Null
+          $csvPath = Join-Path $testDir "smoke.csv"
+          $summaryPath = Join-Path $testDir "smoke.json"
+
+          & "desktop-electron/benchmark-windows.ps1" -RootProcessId $PID -Scenario custom -SampleSeconds 5 -IntervalSeconds 1 -OutputPath $csvPath -SummaryPath $summaryPath
+
+          if (-not (Test-Path $csvPath)) { throw "Benchmark did not write its CSV output." }
+          if (-not (Test-Path $summaryPath)) { throw "Benchmark did not write its JSON summary." }
+
+          $samples = @(Import-Csv -Path $csvPath)
+          $report = Get-Content -Raw -Path $summaryPath | ConvertFrom-Json
+          if ($samples.Count -lt 1) { throw "Benchmark CSV has no samples." }
+          if ($report.summary.Scenario -ne "custom") { throw "JSON report has the wrong scenario." }
+          if ([int]$report.summary.RootProcessId -ne $PID) { throw "JSON report has the wrong root PID." }
+          if ($report.rawSamples.Count -ne $samples.Count) { throw "CSV and JSON sample counts differ." }
+          if ($report.csvFileName -ne "smoke.csv") { throw "JSON report should store only the CSV filename, not an absolute path." }
+          Write-Host ("Benchmark smoke test passed with {0} samples." -f $samples.Count)
+
       - name: Install desktop dependencies
         run: npm install --prefix desktop-electron
 
