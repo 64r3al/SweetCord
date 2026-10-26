@@ -6,6 +6,7 @@ All entries describe preview builds. Performance claims require measurements fro
 
 - Expand Ultra-Lite selectors for commerce and promotion components whose CSS class names vary across Discord versions.
 - Add route-aware pruning for Nitro, Shop, Quests, Store, Discovery and Activities navigation, with a bounded observer to handle dynamically rendered navigation.
+- Install the stylesheet through Electron's native insertCSS API before toggling lightweight mode, reducing reliance on a page-injected style element.
 - Hide additional profile badge and decoration elements in lightweight mode.
 - Add a regression test for the generated navigation-pruning policy.
 - Correct the root benchmark example to sample one app process tree at a time and add release smoke-test coverage for navigation pruning.
