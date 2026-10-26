@@ -115,6 +115,94 @@ const LEAN_STYLES = [
   '{ display: none !important; }',
 ].join("\n");
 
+const CHROME_PRUNING_SCRIPT = String.raw`const chromeRoot = document.getElementById("app-mount");
+const chromeRoutePrefixes = ["/store", "/shop", "/quests", "/quest-home", "/nitro", "/discovery", "/guild-discovery", "/activities"];
+const isChromePromoRoute = (rawHref) => {
+  try {
+    const url = new URL(rawHref, location.origin);
+    if (url.origin !== location.origin) return false;
+    const path = url.pathname.replace(/\/+$/, "").toLowerCase() || "/";
+    return chromeRoutePrefixes.some((route) => path === route || path.startsWith(route + "/"));
+  } catch { return false; }
+};
+const isChromeNavigationItem = (element) => {
+  let node = element;
+  for (let depth = 0; node && depth < 7 && node !== chromeRoot; depth += 1, node = node.parentElement) {
+    if (node.matches("nav, [role='navigation']")) return true;
+    const name = typeof node.className === "string" ? node.className : "";
+    if (/(sidebar|guildsbar|navigation|navitem|nav-item|listitem)/i.test(name)) return true;
+  }
+  return false;
+};
+const chromeHideTarget = (element) => {
+  let node = element;
+  for (let depth = 0; node && depth < 5 && node !== chromeRoot; depth += 1, node = node.parentElement) {
+    const name = typeof node.className === "string" ? node.className : "";
+    if (node.matches("li, [role='listitem'], [data-list-item-id]") || /(navitem|nav-item|sidebaritem|sidebar-item|listitem|list-item)/i.test(name)) return node;
+  }
+  return element;
+};
+const shouldHideChromeElement = (element) => {
+  if (!(element instanceof Element) || !chromeRoot || !chromeRoot.contains(element)) return false;
+  const className = typeof element.className === "string" ? element.className : "";
+  if (/(nitroUpsell|premiumPromo|questHome|questCard|shopUpsell|nitroBanner|questPromo|shopPromo)/i.test(className)) return true;
+  if (element.matches("a[href]") && isChromePromoRoute(element.getAttribute("href") || "")) return true;
+  if (!element.matches("a, button, [role='button'], [role='link']") || !isChromeNavigationItem(element)) return false;
+  const label = [element.getAttribute("aria-label"), element.getAttribute("title"), element.innerText, element.textContent]
+    .filter(Boolean).join(" ").replace(/\s+/g, " ").trim().toLowerCase();
+  return /^(nitro|shop|store|quests?|quest home|discovery|guild discovery|activities)(?:\s|$)/.test(label);
+};
+const pruneChromeElement = (element) => {
+  if (!shouldHideChromeElement(element)) return;
+  const target = chromeHideTarget(element);
+  if (target && target !== chromeRoot) target.setAttribute("data-sweetcord-hidden", "true");
+};
+const pruneChromeSubtree = (node) => {
+  if (!(node instanceof Element) || !chromeRoot) return;
+  pruneChromeElement(node);
+  if (node.querySelectorAll) {
+    node.querySelectorAll("a[href], button, [role='button'], [role='link'], [class*='nitroUpsell' i], [class*='premiumPromo' i], [class*='questHome' i], [class*='questCard' i], [class*='shopUpsell' i]")
+      .forEach(pruneChromeElement);
+  }
+};
+if (chromeRoot) {
+  if (!window.__sweetCordChromePruneObserverInstalled) {
+    const pendingChromeNodes = new Set();
+    let chromeFrameQueued = false;
+    const flushChromeNodes = () => {
+      chromeFrameQueued = false;
+      const nodes = Array.from(pendingChromeNodes);
+      pendingChromeNodes.clear();
+      for (const node of nodes) pruneChromeSubtree(node);
+    };
+    const queueChromeFlush = () => {
+      if (!chromeFrameQueued) {
+        chromeFrameQueued = true;
+        window.requestAnimationFrame(flushChromeNodes);
+      }
+    };
+    const chromeObserver = new MutationObserver((records) => {
+      for (const record of records) {
+        if (record.type === "attributes") {
+          if (record.target instanceof Element) pendingChromeNodes.add(record.target);
+        } else {
+          for (const node of record.addedNodes) if (node instanceof Element) pendingChromeNodes.add(node);
+        }
+      }
+      if (pendingChromeNodes.size) queueChromeFlush();
+    });
+    chromeObserver.observe(chromeRoot, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ["href", "aria-label", "title", "class"]
+    });
+    window.__sweetCordChromePruneObserver = chromeObserver;
+    window.__sweetCordChromePruneObserverInstalled = true;
+  }
+  pruneChromeSubtree(chromeRoot);
+}`;
+
 function buildLeanModeScript(settings) {
   const config = {
     leanMode: settings?.leanMode === true,
@@ -234,7 +322,7 @@ function buildLeanModeScript(settings) {
     '  window.__sweetCordAvatarInitialScanDone = true;',
     '}',
   ];
-  body.splice(12, 0, "const chromeRoot = document.getElementById(\"app-mount\");\nconst chromeRoutePrefixes = [\"/store\", \"/shop\", \"/quests\", \"/quest-home\", \"/nitro\", \"/discovery\", \"/guild-discovery\", \"/activities\"];\nconst isChromePromoRoute = (rawHref) => {\n  try {\n    const url = new URL(rawHref, location.origin);\n    if (url.origin !== location.origin) return false;\n    const path = url.pathname.replace(/\\/+$/, \"\").toLowerCase() || \"/\";\n    return chromeRoutePrefixes.some((route) => path === route || path.startsWith(route + \"/\"));\n  } catch { return false; }\n};\nconst isChromeNavigationItem = (element) => {\n  let node = element;\n  for (let depth = 0; node && depth < 7 && node !== chromeRoot; depth += 1, node = node.parentElement) {\n    if (node.matches(\"nav, [role='navigation']\")) return true;\n    const name = typeof node.className === \"string\" ? node.className : \"\";\n    if (/(sidebar|guildsbar|navigation|navitem|nav-item|listitem)/i.test(name)) return true;\n  }\n  return false;\n};\nconst chromeHideTarget = (element) => {\n  let node = element;\n  for (let depth = 0; node && depth < 5 && node !== chromeRoot; depth += 1, node = node.parentElement) {\n    const name = typeof node.className === \"string\" ? node.className : \"\";\n    if (node.matches(\"li, [role='listitem'], [data-list-item-id]\") || /(navitem|nav-item|sidebaritem|sidebar-item|listitem|list-item)/i.test(name)) return node;\n  }\n  return element;\n};\nconst shouldHideChromeElement = (element) => {\n  if (!(element instanceof Element) || !chromeRoot || !chromeRoot.contains(element)) return false;\n  const className = typeof element.className === \"string\" ? element.className : \"\";\n  if (/(nitroUpsell|premiumPromo|questHome|questCard|shopUpsell|nitroBanner|questPromo|shopPromo)/i.test(className)) return true;\n  if (element.matches(\"a[href]\") && isChromePromoRoute(element.getAttribute(\"href\") || \"\")) return true;\n  if (!element.matches(\"a, button, [role='button'], [role='link']\") || !isChromeNavigationItem(element)) return false;\n  const label = [element.getAttribute(\"aria-label\"), element.getAttribute(\"title\"), element.innerText, element.textContent]\n    .filter(Boolean).join(\" \").replace(/\\s+/g, \" \").trim().toLowerCase();\n  return /^(nitro|shop|store|quests?|quest home|discovery|guild discovery|activities)(?:\\s|$)/.test(label);\n};\nconst pruneChromeElement = (element) => {\n  if (!shouldHideChromeElement(element)) return;\n  const target = chromeHideTarget(element);\n  if (target && target !== chromeRoot) target.setAttribute(\"data-sweetcord-hidden\", \"true\");\n};\nconst pruneChromeSubtree = (node) => {\n  if (!(node instanceof Element) || !chromeRoot) return;\n  pruneChromeElement(node);\n  if (node.querySelectorAll) {\n    node.querySelectorAll(\"a[href], button, [role='button'], [role='link'], [class*='nitroUpsell' i], [class*='premiumPromo' i], [class*='questHome' i], [class*='questCard' i], [class*='shopUpsell' i]\")\n      .forEach(pruneChromeElement);\n  }\n};\nif (chromeRoot) {\n  if (!window.__sweetCordChromePruneObserverInstalled) {\n    const pendingChromeNodes = new Set();\n    let chromeFrameQueued = false;\n    const flushChromeNodes = () => {\n      chromeFrameQueued = false;\n      const nodes = Array.from(pendingChromeNodes);\n      pendingChromeNodes.clear();\n      for (const node of nodes) pruneChromeSubtree(node);\n    };\n    const queueChromeFlush = () => {\n      if (!chromeFrameQueued) {\n        chromeFrameQueued = true;\n        window.requestAnimationFrame(flushChromeNodes);\n      }\n    };\n    const chromeObserver = new MutationObserver((records) => {\n      for (const record of records) {\n        if (record.type === \"attributes\") {\n          if (record.target instanceof Element) pendingChromeNodes.add(record.target);\n        } else {\n          for (const node of record.addedNodes) if (node instanceof Element) pendingChromeNodes.add(node);\n        }\n      }\n      if (pendingChromeNodes.size) queueChromeFlush();\n    });\n    chromeObserver.observe(chromeRoot, {\n      childList: true,\n      subtree: true,\n      attributes: true,\n      attributeFilter: [\"href\", \"aria-label\", \"title\", \"class\"]\n    });\n    window.__sweetCordChromePruneObserver = chromeObserver;\n    window.__sweetCordChromePruneObserverInstalled = true;\n  }\n  pruneChromeSubtree(chromeRoot);\n}");
+  body.splice(12, 0, CHROME_PRUNING_SCRIPT);
   const generatedBody = body.join("\n");
 
   return "(function(){\nconst cfg = " + JSON.stringify(config) + ";\nconst css = " + JSON.stringify(LEAN_STYLES) + ";\n" + generatedBody + "\n})();";
