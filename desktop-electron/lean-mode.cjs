@@ -28,6 +28,26 @@ const LEAN_STYLES = [
   'html.sweetcord-lean-mode #app-mount [role="listitem"]:has(> a[href="/guild-discovery"])',
   '{ display: none !important; }',
   'html.sweetcord-lean-mode #app-mount [class*="promo" i],',
+  'html.sweetcord-lean-mode #app-mount [class*="nitro" i],',
+  'html.sweetcord-lean-mode #app-mount [class*="premium" i],',
+  'html.sweetcord-lean-mode #app-mount [class*="quest" i],',
+  'html.sweetcord-lean-mode #app-mount [class*="shop" i],',
+  'html.sweetcord-lean-mode #app-mount [class*="store" i],',
+  'html.sweetcord-lean-mode #app-mount [class*="discovery" i],',
+  'html.sweetcord-lean-mode #app-mount [data-list-item-id*="nitro" i],',
+  'html.sweetcord-lean-mode #app-mount [data-list-item-id*="quest" i],',
+  'html.sweetcord-lean-mode #app-mount [data-list-item-id*="shop" i],',
+  'html.sweetcord-lean-mode #app-mount [data-list-item-id*="store" i],',
+  'html.sweetcord-lean-mode #app-mount [data-list-item-id*="discovery" i],',
+  'html.sweetcord-lean-mode #app-mount a[aria-label*="nitro" i],',
+  'html.sweetcord-lean-mode #app-mount a[aria-label*="quest" i],',
+  'html.sweetcord-lean-mode #app-mount a[aria-label*="shop" i],',
+  'html.sweetcord-lean-mode #app-mount a[aria-label*="store" i],',
+  'html.sweetcord-lean-mode #app-mount a[aria-label*="discovery" i],',
+  'html.sweetcord-lean-mode #app-mount button[aria-label*="nitro" i],',
+  'html.sweetcord-lean-mode #app-mount button[aria-label*="quest" i],',
+  'html.sweetcord-lean-mode #app-mount button[aria-label*="shop" i],',
+  'html.sweetcord-lean-mode #app-mount button[aria-label*="store" i],',
   'html.sweetcord-lean-mode #app-mount [class*="nitroUpsell" i],',
   'html.sweetcord-lean-mode #app-mount [class*="premiumPromo" i],',
   'html.sweetcord-lean-mode #app-mount [class*="questHome" i],',
@@ -47,7 +67,16 @@ const LEAN_STYLES = [
   'html.sweetcord-trim-profile-decorations #app-mount [class*="profileEffects" i],',
   'html.sweetcord-trim-profile-decorations #app-mount [class*="avatarDecoration" i],',
   'html.sweetcord-trim-profile-decorations #app-mount [class*="profileDecoration" i],',
-  'html.sweetcord-trim-profile-decorations #app-mount [class*="profilePremium" i]',
+  'html.sweetcord-trim-profile-decorations #app-mount [class*="profilePremium" i],',
+  'html.sweetcord-trim-profile-decorations #app-mount [class*="profileBadge" i],',
+  'html.sweetcord-trim-profile-decorations #app-mount [class*="userProfileBadge" i],',
+  'html.sweetcord-trim-profile-decorations #app-mount [class*="badgeList" i],',
+  'html.sweetcord-trim-profile-decorations #app-mount [class*="badgeContainer" i],',
+  'html.sweetcord-trim-profile-decorations #app-mount [aria-label*="Active Developer" i],',
+  'html.sweetcord-trim-profile-decorations #app-mount [aria-label*="HypeSquad" i],',
+  'html.sweetcord-trim-profile-decorations #app-mount [aria-label*="Early Supporter" i],',
+  'html.sweetcord-trim-profile-decorations #app-mount [aria-label*="Server Booster" i],',
+  'html.sweetcord-trim-profile-decorations #app-mount [aria-label*="Verified Bot Developer" i]'
   '{ display: none !important; }',
   'html.sweetcord-voice-only-mode #app-mount video,',
   'html.sweetcord-voice-only-mode #app-mount [class*="video" i],',
@@ -202,7 +231,9 @@ function buildLeanModeScript(settings) {
     '  processExistingAvatars();',
     '  window.__sweetCordAvatarInitialScanDone = true;',
     '}',
-  ].join("\n");
+  ];
+  body.splice(12, 0, "const chromeRoot = document.getElementById(\"app-mount\");\nconst chromeRoutePrefixes = [\"/store\", \"/shop\", \"/quests\", \"/quest-home\", \"/nitro\", \"/discovery\", \"/guild-discovery\", \"/activities\"];\nconst isChromePromoRoute = (rawHref) => {\n  try {\n    const url = new URL(rawHref, location.origin);\n    if (url.origin !== location.origin) return false;\n    const path = url.pathname.replace(/\\/+$/, \"\").toLowerCase() || \"/\";\n    return chromeRoutePrefixes.some((route) => path === route || path.startsWith(route + \"/\"));\n  } catch { return false; }\n};\nconst isChromeNavigationItem = (element) => {\n  let node = element;\n  for (let depth = 0; node && depth < 7 && node !== chromeRoot; depth += 1, node = node.parentElement) {\n    if (node.matches(\"nav, [role='navigation']\")) return true;\n    const name = typeof node.className === \"string\" ? node.className : \"\";\n    if (/(sidebar|guildsbar|navigation|navitem|nav-item|listitem)/i.test(name)) return true;\n  }\n  return false;\n};\nconst chromeHideTarget = (element) => {\n  let node = element;\n  for (let depth = 0; node && depth < 5 && node !== chromeRoot; depth += 1, node = node.parentElement) {\n    const name = typeof node.className === \"string\" ? node.className : \"\";\n    if (node.matches(\"li, [role='listitem'], [data-list-item-id]\") || /(navitem|nav-item|sidebaritem|sidebar-item|listitem|list-item)/i.test(name)) return node;\n  }\n  return element;\n};\nconst shouldHideChromeElement = (element) => {\n  if (!(element instanceof Element) || !chromeRoot || !chromeRoot.contains(element)) return false;\n  const className = typeof element.className === \"string\" ? element.className : \"\";\n  if (/(nitroUpsell|premiumPromo|questHome|questCard|shopUpsell|nitroBanner|questPromo|shopPromo)/i.test(className)) return true;\n  if (element.matches(\"a[href]\") && isChromePromoRoute(element.getAttribute(\"href\") || \"\")) return true;\n  if (!element.matches(\"a, button, [role='button'], [role='link']\") || !isChromeNavigationItem(element)) return false;\n  const label = [element.getAttribute(\"aria-label\"), element.getAttribute(\"title\"), element.innerText, element.textContent]\n    .filter(Boolean).join(\" \").replace(/\\s+/g, \" \").trim().toLowerCase();\n  return /^(nitro|shop|store|quests?|quest home|discovery|guild discovery|activities)(?:\\s|$)/.test(label);\n};\nconst pruneChromeElement = (element) => {\n  if (!shouldHideChromeElement(element)) return;\n  const target = chromeHideTarget(element);\n  if (target && target !== chromeRoot) target.setAttribute(\"data-sweetcord-hidden\", \"true\");\n};\nconst pruneChromeSubtree = (node) => {\n  if (!(node instanceof Element) || !chromeRoot) return;\n  pruneChromeElement(node);\n  if (node.querySelectorAll) {\n    node.querySelectorAll(\"a[href], button, [role='button'], [role='link'], [class*='nitroUpsell' i], [class*='premiumPromo' i], [class*='questHome' i], [class*='questCard' i], [class*='shopUpsell' i]\")\n      .forEach(pruneChromeElement);\n  }\n};\nif (chromeRoot) {\n  if (!window.__sweetCordChromePruneObserverInstalled) {\n    const pendingChromeNodes = new Set();\n    let chromeFrameQueued = false;\n    const flushChromeNodes = () => {\n      chromeFrameQueued = false;\n      const nodes = Array.from(pendingChromeNodes);\n      pendingChromeNodes.clear();\n      for (const node of nodes) pruneChromeSubtree(node);\n    };\n    const queueChromeFlush = () => {\n      if (!chromeFrameQueued) {\n        chromeFrameQueued = true;\n        window.requestAnimationFrame(flushChromeNodes);\n      }\n    };\n    const chromeObserver = new MutationObserver((records) => {\n      for (const record of records) {\n        if (record.type === \"attributes\") {\n          if (record.target instanceof Element) pendingChromeNodes.add(record.target);\n        } else {\n          for (const node of record.addedNodes) if (node instanceof Element) pendingChromeNodes.add(node);\n        }\n      }\n      if (pendingChromeNodes.size) queueChromeFlush();\n    });\n    chromeObserver.observe(chromeRoot, {\n      childList: true,\n      subtree: true,\n      attributes: true,\n      attributeFilter: [\"href\", \"aria-label\", \"title\", \"class\"]\n    });\n    window.__sweetCordChromePruneObserver = chromeObserver;\n    window.__sweetCordChromePruneObserverInstalled = true;\n  }\n  pruneChromeSubtree(chromeRoot);\n}");
+  const generatedBody = body.join("\\n");
 
   return "(function(){\nconst cfg = " + JSON.stringify(config) + ";\nconst css = " + JSON.stringify(LEAN_STYLES) + ";\n" + body + "\n})();";
 }
