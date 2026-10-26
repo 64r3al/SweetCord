@@ -11,7 +11,7 @@ const {
 const { existsSync, readFileSync, writeFileSync } = require("node:fs");
 const path = require("node:path");
 const { buildLeanModeScript } = require("./lean-mode.cjs");
-const { shouldBlockHeavyResource } = require("./resource-policy.cjs");
+const { shouldBlockHeavyResource, shouldBlockHeavyResponse } = require("./resource-policy.cjs");
 const { isPermissionRequestAllowed, isPermissionCheckAllowed } = require("./permission-policy.cjs");
 const {
   DEFAULT_PREFERENCES,
@@ -383,6 +383,23 @@ function installTextOnlyResourceBlocking(discordSession) {
   );
 }
 
+function installVisualMediaResponseBlocking(discordSession) {
+  // URL extensions are not always present on Discord's CDN. Inspect the response
+  // MIME type as a second line of defense; do not cancel audio/* responses.
+  discordSession.webRequest.onHeadersReceived(
+    { urls: ["<all_urls>"], types: ["image", "media"] },
+    (details, callback) => {
+      const cancel = shouldBlockHeavyResponse(details, {
+        enabled: textOnlyModeEnabled,
+        profile: performanceProfile,
+        mainWebContentsId: mainWindow?.webContents.id,
+        currentUrl: mainWindow?.webContents.getURL()
+      });
+      callback(cancel ? { cancel: true } : {});
+    }
+  );
+}
+
 async function showMemorySnapshot() {
   // app.getAppMetrics() measures CPU between consecutive calls. This five-second
   // sample runs only when the user opens the diagnostic from the menu.
@@ -502,6 +519,7 @@ app.whenReady().then(() => {
   const discordSession = session.fromPartition("persist:sweetcord-discord");
   installDiscordPermissions(discordSession);
   installTextOnlyResourceBlocking(discordSession);
+  installVisualMediaResponseBlocking(discordSession);
   makeMenu();
   createMainWindow(discordSession);
 
