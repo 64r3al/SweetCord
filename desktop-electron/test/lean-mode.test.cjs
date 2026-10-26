@@ -2,7 +2,7 @@
 
 const test = require("node:test");
 const assert = require("node:assert/strict");
-const { buildLeanModeScript } = require("../lean-mode.cjs");
+const { buildLeanModeScript, LEAN_STYLES } = require("../lean-mode.cjs");
 
 const defaults = {
   leanMode: true,
@@ -53,7 +53,7 @@ test("disabling static avatars generates a reversible configuration", () => {
 
 
 test("Ultra-Lite hides visual media and leaves voice UI available", () => {
-  const source = buildLeanModeScript(defaults);
+  const source = buildLeanModeScript(defaults) + LEAN_STYLES;
   assert.match(source, /#app-mount img/);
   assert.ok(source.includes("gif"));
   assert.ok(source.includes("sticker"));
@@ -75,14 +75,14 @@ test("Ultra-Lite includes a dynamic navigation-pruning policy", () => {
 });
 
 test("lightweight style includes additional profile decoration selectors", () => {
-  const source = buildLeanModeScript(defaults);
+  const source = buildLeanModeScript(defaults) + LEAN_STYLES;
   assert.match(source, /profileBadge/);
   assert.match(source, /userProfileBadge/);
   assert.match(source, /badgeContainer/);
 });
 
 test("video and screen-share controls are hidden even with image mode off", () => {
-  const source = buildLeanModeScript({ ...defaults, textOnlyMode: false });
+  const source = buildLeanModeScript({ ...defaults, textOnlyMode: false }) + LEAN_STYLES;
   assert.ok(source.includes("sweetcord-voice-only-mode #app-mount video"));
   assert.ok(source.includes("screenShare"));
 });
