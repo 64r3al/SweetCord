@@ -3,6 +3,8 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 const {
   shouldBlockHeavyResource,
+  shouldBlockHeavyResponse,
+  getResponseContentType,
   isLikelyVisualMediaAsset,
   isLikelyAnimatedVisualAsset
 } = require("../resource-policy.cjs");
@@ -54,4 +56,49 @@ test("malformed metadata fails open", () => {
   assert.equal(shouldBlockHeavyResource({},options),false);
   assert.equal(shouldBlockHeavyResource({webContentsId:12,resourceType:"image"},{enabled:true,mainWebContentsId:12}),false);
   assert.equal(shouldBlockHeavyResource({webContentsId:12,resourceType:"media"},options),false);
+});
+
+
+test("MIME fallback blocks extensionless video responses in Extreme Lite and Balanced", () => {
+  const extensionlessVideo = {
+    webContentsId: 12,
+    resourceType: "media",
+    url: "https://cdn.discordapp.com/attachments/1/2/clip",
+    responseHeaders: { "Content-Type": ["video/mp4; codecs=avc1"] }
+  };
+  assert.equal(shouldBlockHeavyResponse(extensionlessVideo, options), true);
+  assert.equal(shouldBlockHeavyResponse(extensionlessVideo, { ...options, profile: "balanced", enabled: false }), true);
+});
+
+test("MIME fallback preserves audio, including extensionless audio streams", () => {
+  for (const contentType of ["audio/ogg", "audio/webm", "application/octet-stream"]) {
+    assert.equal(shouldBlockHeavyResponse({
+      webContentsId: 12,
+      resourceType: "media",
+      url: "https://cdn.discordapp.com/stream",
+      responseHeaders: { "content-type": [contentType] }
+    }, options), false, contentType);
+  }
+});
+
+test("Balanced MIME filtering blocks known animated images but allows still images", () => {
+  const balanced = { ...options, profile: "balanced", enabled: false };
+  assert.equal(shouldBlockHeavyResponse({
+    webContentsId: 12,
+    resourceType: "image",
+    responseHeaders: { "Content-Type": ["image/gif"] }
+  }, balanced), true);
+  assert.equal(shouldBlockHeavyResponse({
+    webContentsId: 12,
+    resourceType: "image",
+    responseHeaders: { "Content-Type": ["image/png"] }
+  }, balanced), false);
+});
+
+test("MIME filtering respects window scope, auth routes and malformed headers", () => {
+  const video = { webContentsId: 12, resourceType: "media", responseHeaders: { "Content-Type": ["video/mp4"] } };
+  assert.equal(shouldBlockHeavyResponse({ ...video, webContentsId: 99 }, options), false);
+  assert.equal(shouldBlockHeavyResponse(video, { ...options, currentUrl: "https://discord.com/login" }), false);
+  assert.equal(shouldBlockHeavyResponse({ ...video, responseHeaders: {} }, options), false);
+  assert.equal(getResponseContentType({ "CONTENT-TYPE": [" Video/MP4 ; codecs=x"] }), "video/mp4");
 });
