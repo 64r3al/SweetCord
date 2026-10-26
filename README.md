@@ -14,7 +14,7 @@ A community-built gaming chat project exploring a lighter desktop experience and
   <img alt="Platform" src="https://img.shields.io/badge/Desktop-Windows-0078D4?style=flat&logo=windows&logoColor=white">
 </p>
 
-[Desktop showcase site](desktop-site/README.md) · [Explore the code](https://github.com/64r3al/SweetCord) · [Windows releases](https://github.com/64r3al/SweetCord/releases) · [Report a problem](https://github.com/64r3al/SweetCord/issues)
+[Explore the code](https://github.com/64r3al/SweetCord) · [Windows releases](https://github.com/64r3al/SweetCord/releases) · [Report a problem](https://github.com/64r3al/SweetCord/issues)
 
 </div>
 
