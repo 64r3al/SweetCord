@@ -130,7 +130,7 @@ const isChromeNavigationItem = (element) => {
   for (let depth = 0; node && depth < 7 && node !== chromeRoot; depth += 1, node = node.parentElement) {
     if (node.matches("nav, [role='navigation']")) return true;
     const name = typeof node.className === "string" ? node.className : "";
-    if (/(sidebar|guildsbar|navigation|navitem|nav-item|listitem)/i.test(name)) return true;
+    if (/(sidebar|guildsbar|navigation|navitem|nav-item)/i.test(name)) return true;
   }
   return false;
 };
@@ -151,6 +151,13 @@ const shouldHideChromeElement = (element) => {
   const label = [element.getAttribute("aria-label"), element.getAttribute("title"), element.innerText, element.textContent]
     .filter(Boolean).join(" ").replace(/\s+/g, " ").trim().toLowerCase();
   return /^(nitro|shop|store|quests?|quest home|discovery|guild discovery|activities)(?:\s|$)/.test(label);
+};
+const isRelevantChromeMutationTarget = (element) => {
+  if (!(element instanceof Element) || !chromeRoot || !chromeRoot.contains(element)) return false;
+  const className = typeof element.className === "string" ? element.className : "";
+  if (/(nitroUpsell|premiumPromo|questHome|questCard|shopUpsell|nitroBanner|questPromo|shopPromo)/i.test(className)) return true;
+  if (element.matches("a[href]") && isChromePromoRoute(element.getAttribute("href") || "")) return true;
+  return isChromeNavigationItem(element);
 };
 const pruneChromeElement = (element) => {
   if (!shouldHideChromeElement(element)) return;
@@ -184,9 +191,9 @@ if (chromeRoot) {
     const chromeObserver = new MutationObserver((records) => {
       for (const record of records) {
         if (record.type === "attributes") {
-          if (record.target instanceof Element) pendingChromeNodes.add(record.target);
+          if (record.target instanceof Element && isRelevantChromeMutationTarget(record.target)) pendingChromeNodes.add(record.target);
         } else {
-          for (const node of record.addedNodes) if (node instanceof Element) pendingChromeNodes.add(node);
+          for (const node of record.addedNodes) if (node instanceof Element && isRelevantChromeMutationTarget(node)) pendingChromeNodes.add(node);
         }
       }
       if (pendingChromeNodes.size) queueChromeFlush();
