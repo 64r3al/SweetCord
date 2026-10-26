@@ -62,8 +62,65 @@ function shouldBlockHeavyResource(details, options = {}) {
   return isLikelyVisualMediaAsset(details.url);
 }
 
+const ANIMATED_IMAGE_MIME_TYPES = new Set([
+  "image/gif",
+  "image/apng",
+  "image/vnd.mozilla.apng",
+  "image/x-apng"
+]);
+const VISUAL_MEDIA_MIME_TYPES = new Set([
+  "application/vnd.apple.mpegurl",
+  "application/x-mpegurl",
+  "application/dash+xml"
+]);
+
+function getResponseContentType(responseHeaders) {
+  if (!responseHeaders || typeof responseHeaders !== "object") return "";
+  const entry = Object.entries(responseHeaders).find(([name]) => name.toLowerCase() === "content-type");
+  if (!entry) return "";
+  const value = Array.isArray(entry[1]) ? entry[1][0] : entry[1];
+  return String(value || "").split(";", 1)[0].trim().toLowerCase();
+}
+
+/**
+ * Header-level fallback for visual assets whose URLs do not expose a file extension.
+ * It cancels video MIME responses before their response body is delivered, while
+ * explicitly allowing audio MIME responses so microphone voice calls are not blocked.
+ */
+function shouldBlockHeavyResponse(details, options = {}) {
+  if (!Number.isInteger(options.mainWebContentsId)) return false;
+  if (!details || details.webContentsId !== options.mainWebContentsId) return false;
+
+  const profile = options.profile || (options.enabled === true ? "extreme-lite" : "custom");
+  if (profile !== "balanced" && options.enabled !== true) return false;
+
+  const type = String(details.resourceType || "").toLowerCase();
+  if (type !== "image" && type !== "media") return false;
+
+  try {
+    const activeUrl = new URL(options.currentUrl);
+    if (activeUrl.protocol !== "https:" || !hostMatches(activeUrl.hostname, DISCORD_HOSTS)) return false;
+    if (AUTH_PATH.test(activeUrl.pathname)) return false;
+  } catch {
+    return false;
+  }
+
+  const contentType = getResponseContentType(details.responseHeaders);
+  if (!contentType) return false;
+
+  if (type === "image") {
+    if (profile === "balanced") return ANIMATED_IMAGE_MIME_TYPES.has(contentType);
+    return options.enabled === true && contentType.startsWith("image/");
+  }
+
+  // Never cancel audio/* responses. Video and known HLS/DASH playlist types are visual.
+  return contentType.startsWith("video/") || VISUAL_MEDIA_MIME_TYPES.has(contentType);
+}
+
 module.exports = {
   shouldBlockHeavyResource,
+  shouldBlockHeavyResponse,
+  getResponseContentType,
   isLikelyVisualMediaAsset,
   isLikelyAnimatedVisualAsset
 };
