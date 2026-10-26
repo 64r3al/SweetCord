@@ -210,7 +210,7 @@ if (chromeRoot) {
       childList: true,
       subtree: true,
       attributes: true,
-      attributeFilter: ["href", "aria-label", "title", "class"]
+      attributeFilter: ["href", "aria-label", "title"]
     });
     window.__sweetCordChromePruneObserver = chromeObserver;
     window.__sweetCordChromePruneObserverInstalled = true;
