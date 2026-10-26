@@ -231,10 +231,6 @@ function buildLeanModeScript(settings) {
     '"use strict";',
     'const root = document.documentElement;',
     'if (!root) return;',
-    'const styleId = "sweetcord-lean-mode-style";',
-    'let style = document.getElementById(styleId);',
-    'if (!style) { style = document.createElement("style"); style.id = styleId; (document.head || root).appendChild(style); }',
-    'if (style.textContent !== css) style.textContent = css;',
     'root.classList.toggle("sweetcord-lean-mode", cfg.leanMode);',
     'root.classList.toggle("sweetcord-reduced-motion", cfg.reduceMotion);',
     'root.classList.toggle("sweetcord-trim-profile-decorations", cfg.hideProfileDecorations);',
@@ -337,10 +333,10 @@ function buildLeanModeScript(settings) {
     '  window.__sweetCordAvatarInitialScanDone = true;',
     '}',
   ];
-  body.splice(12, 0, CHROME_PRUNING_SCRIPT);
+  body.splice(8, 0, CHROME_PRUNING_SCRIPT);
   const generatedBody = body.join("\n");
 
-  return "(function(){\nconst cfg = " + JSON.stringify(config) + ";\nconst css = " + JSON.stringify(LEAN_STYLES) + ";\n" + generatedBody + "\n})();";
+  return "(function(){\nconst cfg = " + JSON.stringify(config) + ";\n" + generatedBody + "\n})();";
 }
 
-module.exports = { buildLeanModeScript };
+module.exports = { buildLeanModeScript, LEAN_STYLES };
