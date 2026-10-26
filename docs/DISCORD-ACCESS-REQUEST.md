@@ -3,6 +3,10 @@
 **Status:** Draft only. This file has not been sent to Discord.  
 **Purpose:** obtain written guidance before implementing or distributing a third-party lightweight client.
 
+## Suggested submission channel
+
+Start with the [official Discord Developer Support request form](https://support-dev.discord.com/hc/en-us/requests/new). Select the closest developer/API support category and ask that the request be routed to the team responsible for platform policy and API access. The [Social SDK business-development form](https://discord.com/developers/contact-us) is specifically oriented to games and should only be used if Discord directs this project there.
+
 ## Suggested subject
 
 Request for written guidance on a lightweight desktop chat project and supported Discord integrations
