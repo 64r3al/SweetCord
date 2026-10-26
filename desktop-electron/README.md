@@ -1,6 +1,6 @@
 # SweetCord Desktop — Performance Profiles Preview
 
-SweetCord Desktop wraps Discord's official web app. Version **0.5.0** adds configurable performance profiles and better local diagnostics. It does not replace Discord's renderer or implement a separate Discord protocol.
+SweetCord Desktop wraps Discord's official web app. Version **0.6.0** adds response-MIME filtering for extensionless video and animation resources, alongside configurable performance profiles and local diagnostics. It does not replace Discord's renderer or implement a separate Discord protocol.
 
 ## Performance profiles
 
@@ -10,14 +10,14 @@ SweetCord Desktop wraps Discord's official web app. Version **0.5.0** adds confi
 
 Switching profiles reloads Discord so the network policy takes effect consistently. Changes made in Custom preserve the other active settings. Existing v0.4.0 preference files are migrated without discarding an explicit prior choice to allow images.
 
-The wrapper cannot suspend Discord's own application logic. All profiles still run Discord's JavaScript, API, text renderer and Chromium. Profiles are behavior controls, not memory-limit enforcement.
+The wrapper cannot suspend Discord's own application logic. All profiles still run Discord's JavaScript, API, text renderer and Chromium. URL and response-MIME filtering can catch more visual media, but profiles are behavior controls—not memory-limit enforcement—and cannot guarantee a fixed CPU/RAM target.
 
 ## Ultra-Lite mode
 
 Extreme Lite remains the default for new installs and existing preference files without a saved profile:
 
 - Extreme Lite cancels image requests, including profile photos, server icons, banners, GIFs, stickers, custom emoji images, image attachments and image embeds. Balanced allows still images but cancels clearly identified animated-image formats.
-- All profiles cancel media requests only when the URL clearly identifies a video/GIF asset. Ambiguous media URLs are allowed to protect voice-call compatibility.
+- All profiles cancel media requests when the URL clearly identifies video/GIF assets or the response MIME type identifies video/HLS/DASH content. Audio MIME responses are explicitly allowed to protect voice-call compatibility; unknown response types fail open.
 - Hides visual extras, embeds, video/camera/screen-share controls, profile decoration, Activities and Nitro/Shop/Quests promotions.
 - Disables decorative transitions and profile effects.
 - Allows microphone-only capture from HTTPS Discord origins. Camera, mixed audio/video capture and display capture are denied.
