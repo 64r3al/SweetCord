@@ -1,6 +1,6 @@
 # SweetCord Desktop — Performance Profiles Preview
 
-SweetCord Desktop wraps Discord's official web app. Version **0.7.0** adds MIME-aware visual-media filtering, a process-tree-aware Windows benchmark, and safer startup ordering for the experimental Tauri/WebView2 filter. It does not replace Discord's renderer or implement a separate Discord protocol.
+SweetCord Desktop wraps Discord's official web app. Version **0.8.0** strengthens lightweight navigation pruning and profile-decoration removal. The process-tree benchmark remains the required way to verify real CPU and memory changes; this version does not claim a fixed RAM limit. It does not replace Discord's renderer or implement a separate Discord protocol.
 
 ## Performance profiles
 
@@ -18,7 +18,7 @@ Extreme Lite remains the default for new installs and existing preference files 
 
 - Extreme Lite cancels image requests, including profile photos, server icons, banners, GIFs, stickers, custom emoji images, image attachments and image embeds. Balanced allows still images but cancels clearly identified animated-image formats.
 - All profiles cancel media requests when the URL clearly identifies video/GIF assets or the response MIME type identifies video/HLS/DASH content. Audio MIME responses are explicitly allowed to protect voice-call compatibility; unknown response types fail open.
-- Hides visual extras, embeds, video/camera/screen-share controls, profile decoration, Activities and Nitro/Shop/Quests promotions.
+- Hides visual extras, embeds, video/camera/screen-share controls, profile decoration and badges, Activities, and Nitro/Shop/Quests/Store/Discovery promotions. Selector-based hiding is supplemented by route-aware pruning for navigation items and rerendered UI.
 - Disables decorative transitions and profile effects.
 - Allows microphone-only capture from HTTPS Discord origins. Camera, mixed audio/video capture and display capture are denied.
 - Skips avatar observers and avatar scans while Ultra-Lite mode is enabled.
@@ -27,7 +27,7 @@ Discord's selectors, URLs and request behavior can change, so these filters are 
 
 ## Trade-offs and limitations
 
-Profile photos, server icons, banners, emoji images, stickers, GIFs, image previews and many embeds are missing. Camera calls and screen sharing are deliberately unavailable. Discord's scripts, API traffic, channel lists, message rendering and Electron/Chromium remain active. There is no hard 1 GiB RAM cap and no unmeasured resource-savings promise. Unknown-extension video requests may pass through because ambiguous media URLs are allowed to protect voice.
+Profile photos, server icons, banners, emoji images, stickers, GIFs, image previews and many embeds are missing. Camera calls and screen sharing are deliberately unavailable. Discord's scripts, API traffic, channel lists, message rendering and Electron/Chromium remain active. There is no hard 200 MB or 1 GiB RAM cap and no unmeasured resource-savings promise. Unknown-extension video requests may pass through because ambiguous media URLs are allowed to protect voice.
 
 Switching **Performance → Extreme Lite / Balanced / Custom** reloads Discord so network filtering applies consistently. Changes to the image-blocking checkbox also reload the page. Save any unsent message before switching profiles.
 
@@ -48,7 +48,7 @@ npm test
 npm run package:win
 ```
 
-The installer is emitted to `desktop-electron/release/SweetCord-Setup-0.7.0.exe`. The packaged files include `permission-policy.cjs`.
+The installer is emitted to `desktop-electron/release/SweetCord-Setup-0.8.0.exe`. The packaged files include `permission-policy.cjs`.
 
 ## Performance menu
 

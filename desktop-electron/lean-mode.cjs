@@ -28,12 +28,35 @@ const LEAN_STYLES = [
   'html.sweetcord-lean-mode #app-mount [role="listitem"]:has(> a[href="/guild-discovery"])',
   '{ display: none !important; }',
   'html.sweetcord-lean-mode #app-mount [class*="promo" i],',
+  'html.sweetcord-lean-mode #app-mount [class*="nitro" i],',
+  'html.sweetcord-lean-mode #app-mount [class*="premium" i],',
+  'html.sweetcord-lean-mode #app-mount [class*="quest" i],',
+  'html.sweetcord-lean-mode #app-mount [class*="shop" i],',
+  'html.sweetcord-lean-mode #app-mount [class*="store" i],',
+  'html.sweetcord-lean-mode #app-mount [class*="discovery" i],',
+  'html.sweetcord-lean-mode #app-mount [data-list-item-id*="nitro" i],',
+  'html.sweetcord-lean-mode #app-mount [data-list-item-id*="quest" i],',
+  'html.sweetcord-lean-mode #app-mount [data-list-item-id*="shop" i],',
+  'html.sweetcord-lean-mode #app-mount [data-list-item-id*="store" i],',
+  'html.sweetcord-lean-mode #app-mount [data-list-item-id*="discovery" i],',
+  'html.sweetcord-lean-mode #app-mount a[aria-label*="nitro" i],',
+  'html.sweetcord-lean-mode #app-mount a[aria-label*="quest" i],',
+  'html.sweetcord-lean-mode #app-mount a[aria-label*="shop" i],',
+  'html.sweetcord-lean-mode #app-mount a[aria-label*="store" i],',
+  'html.sweetcord-lean-mode #app-mount a[aria-label*="discovery" i],',
+  'html.sweetcord-lean-mode #app-mount button[aria-label*="nitro" i],',
+  'html.sweetcord-lean-mode #app-mount button[aria-label*="quest" i],',
+  'html.sweetcord-lean-mode #app-mount button[aria-label*="shop" i],',
+  'html.sweetcord-lean-mode #app-mount button[aria-label*="store" i],',
   'html.sweetcord-lean-mode #app-mount [class*="nitroUpsell" i],',
   'html.sweetcord-lean-mode #app-mount [class*="premiumPromo" i],',
   'html.sweetcord-lean-mode #app-mount [class*="questHome" i],',
   'html.sweetcord-lean-mode #app-mount [class*="questCard" i],',
   'html.sweetcord-lean-mode #app-mount [class*="shopUpsell" i],',
   'html.sweetcord-lean-mode #app-mount [class*="nitroBanner" i]',
+  '{ display: none !important; }',
+  'html.sweetcord-lean-mode #app-mount [data-sweetcord-hidden="true"],',
+  'html.sweetcord-text-only-mode #app-mount [data-sweetcord-hidden="true"]',
   '{ display: none !important; }',
   'html.sweetcord-lean-mode #app-mount [class*="backdrop" i],',
   'html.sweetcord-lean-mode #app-mount [class*="blur" i]',
@@ -47,7 +70,16 @@ const LEAN_STYLES = [
   'html.sweetcord-trim-profile-decorations #app-mount [class*="profileEffects" i],',
   'html.sweetcord-trim-profile-decorations #app-mount [class*="avatarDecoration" i],',
   'html.sweetcord-trim-profile-decorations #app-mount [class*="profileDecoration" i],',
-  'html.sweetcord-trim-profile-decorations #app-mount [class*="profilePremium" i]',
+  'html.sweetcord-trim-profile-decorations #app-mount [class*="profilePremium" i],',
+  'html.sweetcord-trim-profile-decorations #app-mount [class*="profileBadge" i],',
+  'html.sweetcord-trim-profile-decorations #app-mount [class*="userProfileBadge" i],',
+  'html.sweetcord-trim-profile-decorations #app-mount [class*="badgeList" i],',
+  'html.sweetcord-trim-profile-decorations #app-mount [class*="badgeContainer" i],',
+  'html.sweetcord-trim-profile-decorations #app-mount [aria-label*="Active Developer" i],',
+  'html.sweetcord-trim-profile-decorations #app-mount [aria-label*="HypeSquad" i],',
+  'html.sweetcord-trim-profile-decorations #app-mount [aria-label*="Early Supporter" i],',
+  'html.sweetcord-trim-profile-decorations #app-mount [aria-label*="Server Booster" i],',
+  'html.sweetcord-trim-profile-decorations #app-mount [aria-label*="Verified Bot Developer" i]',
   '{ display: none !important; }',
   'html.sweetcord-voice-only-mode #app-mount video,',
   'html.sweetcord-voice-only-mode #app-mount [class*="video" i],',
@@ -84,6 +116,108 @@ const LEAN_STYLES = [
   '{ display: none !important; }',
 ].join("\n");
 
+const CHROME_PRUNING_SCRIPT = String.raw`const chromeRoot = document.getElementById("app-mount");
+const chromeRoutePrefixes = ["/store", "/shop", "/quests", "/quest-home", "/nitro", "/discovery", "/guild-discovery", "/activities"];
+const isChromePromoRoute = (rawHref) => {
+  try {
+    const url = new URL(rawHref, location.origin);
+    if (url.origin !== location.origin) return false;
+    const path = url.pathname.replace(/\/+$/, "").toLowerCase() || "/";
+    return chromeRoutePrefixes.some((route) => path === route || path.startsWith(route + "/"));
+  } catch { return false; }
+};
+const isChromeNavigationItem = (element) => {
+  let node = element;
+  for (let depth = 0; node && depth < 7 && node !== chromeRoot; depth += 1, node = node.parentElement) {
+    if (node.matches("nav, [role='navigation']")) return true;
+    const name = typeof node.className === "string" ? node.className : "";
+    if (/(sidebar|guildsbar|navigation|navitem|nav-item)/i.test(name)) return true;
+  }
+  return false;
+};
+const chromeHideTarget = (element) => {
+  let node = element;
+  for (let depth = 0; node && depth < 5 && node !== chromeRoot; depth += 1, node = node.parentElement) {
+    const name = typeof node.className === "string" ? node.className : "";
+    if (node.matches("li, [role='listitem'], [data-list-item-id]") || /(navitem|nav-item|sidebaritem|sidebar-item|listitem|list-item)/i.test(name)) return node;
+  }
+  return element;
+};
+const shouldHideChromeElement = (element) => {
+  if (!(element instanceof Element) || !chromeRoot || !chromeRoot.contains(element)) return false;
+  const className = typeof element.className === "string" ? element.className : "";
+  if (/(nitroUpsell|premiumPromo|questHome|questCard|shopUpsell|nitroBanner|questPromo|shopPromo)/i.test(className)) return true;
+  if (element.matches("a[href]") && isChromePromoRoute(element.getAttribute("href") || "")) return true;
+  if (!element.matches("a, button, [role='button'], [role='link']") || !isChromeNavigationItem(element)) return false;
+  const label = [element.getAttribute("aria-label"), element.getAttribute("title"), element.innerText, element.textContent]
+    .filter(Boolean).join(" ").replace(/\s+/g, " ").trim().toLowerCase();
+  return /^(nitro|shop|store|quests?|quest home|discovery|guild discovery|activities)(?:\s|$)/.test(label);
+};
+const isRelevantChromeMutationTarget = (element) => {
+  if (!(element instanceof Element) || !chromeRoot || !chromeRoot.contains(element)) return false;
+  const className = typeof element.className === "string" ? element.className : "";
+  if (/(nitroUpsell|premiumPromo|questHome|questCard|shopUpsell|nitroBanner|questPromo|shopPromo)/i.test(className)) return true;
+  if (element.matches("a[href]") && isChromePromoRoute(element.getAttribute("href") || "")) return true;
+  return isChromeNavigationItem(element);
+};
+const pruneChromeElement = (element) => {
+  if (!(element instanceof Element) || !chromeRoot || !chromeRoot.contains(element)) return;
+  const target = chromeHideTarget(element);
+  if (!target || target === chromeRoot) return;
+  if (shouldHideChromeElement(element)) {
+    target.setAttribute("data-sweetcord-pruned", "true");
+    target.setAttribute("data-sweetcord-hidden", "true");
+  } else if (target.getAttribute("data-sweetcord-pruned") === "true") {
+    target.removeAttribute("data-sweetcord-hidden");
+    target.removeAttribute("data-sweetcord-pruned");
+  }
+};
+const pruneChromeSubtree = (node) => {
+  if (!(node instanceof Element) || !chromeRoot) return;
+  pruneChromeElement(node);
+  if (node.querySelectorAll) {
+    node.querySelectorAll("a[href], button, [role='button'], [role='link'], [class*='nitroUpsell' i], [class*='premiumPromo' i], [class*='questHome' i], [class*='questCard' i], [class*='shopUpsell' i]")
+      .forEach(pruneChromeElement);
+  }
+};
+if (chromeRoot) {
+  if (!window.__sweetCordChromePruneObserverInstalled) {
+    const pendingChromeNodes = new Set();
+    let chromeFrameQueued = false;
+    const flushChromeNodes = () => {
+      chromeFrameQueued = false;
+      const nodes = Array.from(pendingChromeNodes);
+      pendingChromeNodes.clear();
+      for (const node of nodes) pruneChromeSubtree(node);
+    };
+    const queueChromeFlush = () => {
+      if (!chromeFrameQueued) {
+        chromeFrameQueued = true;
+        window.requestAnimationFrame(flushChromeNodes);
+      }
+    };
+    const chromeObserver = new MutationObserver((records) => {
+      for (const record of records) {
+        if (record.type === "attributes") {
+          if (record.target instanceof Element && isRelevantChromeMutationTarget(record.target)) pendingChromeNodes.add(record.target);
+        } else {
+          for (const node of record.addedNodes) if (node instanceof Element && isRelevantChromeMutationTarget(node)) pendingChromeNodes.add(node);
+        }
+      }
+      if (pendingChromeNodes.size) queueChromeFlush();
+    });
+    chromeObserver.observe(chromeRoot, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ["href", "aria-label", "title"]
+    });
+    window.__sweetCordChromePruneObserver = chromeObserver;
+    window.__sweetCordChromePruneObserverInstalled = true;
+  }
+  pruneChromeSubtree(chromeRoot);
+}`;
+
 function buildLeanModeScript(settings) {
   const config = {
     leanMode: settings?.leanMode === true,
@@ -97,10 +231,6 @@ function buildLeanModeScript(settings) {
     '"use strict";',
     'const root = document.documentElement;',
     'if (!root) return;',
-    'const styleId = "sweetcord-lean-mode-style";',
-    'let style = document.getElementById(styleId);',
-    'if (!style) { style = document.createElement("style"); style.id = styleId; (document.head || root).appendChild(style); }',
-    'if (style.textContent !== css) style.textContent = css;',
     'root.classList.toggle("sweetcord-lean-mode", cfg.leanMode);',
     'root.classList.toggle("sweetcord-reduced-motion", cfg.reduceMotion);',
     'root.classList.toggle("sweetcord-trim-profile-decorations", cfg.hideProfileDecorations);',
@@ -202,9 +332,11 @@ function buildLeanModeScript(settings) {
     '  processExistingAvatars();',
     '  window.__sweetCordAvatarInitialScanDone = true;',
     '}',
-  ].join("\n");
+  ];
+  body.splice(8, 0, CHROME_PRUNING_SCRIPT);
+  const generatedBody = body.join("\n");
 
-  return "(function(){\nconst cfg = " + JSON.stringify(config) + ";\nconst css = " + JSON.stringify(LEAN_STYLES) + ";\n" + body + "\n})();";
+  return "(function(){\nconst cfg = " + JSON.stringify(config) + ";\n" + generatedBody + "\n})();";
 }
 
-module.exports = { buildLeanModeScript };
+module.exports = { buildLeanModeScript, LEAN_STYLES };

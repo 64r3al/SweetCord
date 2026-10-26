@@ -288,10 +288,10 @@ Use the same Windows PC, Discord account, network, window size, and activity for
 From PowerShell at the repository root:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File .\desktop-electron\benchmark-windows.ps1 -ProcessName SweetCord,Discord,Vesktop -SampleSeconds 60 -IntervalSeconds 2 -OutputPath .\benchmark-sweetcord.csv
+powershell -ExecutionPolicy Bypass -File .\desktop-electron\benchmark-windows.ps1 -ProcessName SweetCord -SampleSeconds 60 -IntervalSeconds 2 -OutputPath .\sweetcord-idle-run1.csv
 ```
 
-The benchmark reports repeated CPU and memory samples, including median and peak metrics. It writes a CSV only when `-OutputPath` is provided; results stay on your machine. Process-name differences or processes that exit during the measurement can affect results. For GPU activity, use **Task Manager → Details** and enable the **GPU** and **GPU engine** columns. When testing Tauri, account for WebView2 processes and unrelated Edge windows.
+Run one application per sample and use separate CSV files for each repeated run and scenario. The benchmark includes root-process descendants, reports median/peak memory and CPU statistics, and writes a CSV only when `-OutputPath` is provided; results stay on your machine. Process-name differences or processes that exit during the measurement can affect results. For GPU activity, use **Task Manager → Details** and enable the **GPU** and **GPU engine** columns. When testing Tauri, account for WebView2 processes and unrelated Edge windows.
 
 ## Testing and validation
 

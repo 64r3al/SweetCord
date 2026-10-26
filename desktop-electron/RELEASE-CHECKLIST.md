@@ -16,6 +16,7 @@ This checklist applies before merging a release-tagged performance change. Sweet
 - [ ] Login and supported OAuth/verification flow complete successfully.
 - [ ] Open DMs, switch servers/channels, read history, type and send messages, and navigate normally.
 - [ ] Extreme Lite filters images/recognized visual media; Balanced still allows static images; Custom preferences persist.
+- [ ] Verify Nitro, Shop, Quests, Store and Discovery are hidden after startup and route changes, and profile decorations/badges are removed in lightweight mode.
 - [ ] Change profiles only after saving drafts, confirm the page reload is expected, and verify the selected profile remains selected after restart.
 - [ ] Start and receive a microphone voice call; test input/output device selection, mute/unmute, reconnect, and normal channel navigation.
 - [ ] Keep a real voice call running while minimizing, restoring and resizing the app; confirm audio does not stop or become unstable.

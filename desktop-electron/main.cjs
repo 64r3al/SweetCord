@@ -10,7 +10,7 @@ const {
 } = require("electron");
 const { existsSync, readFileSync, writeFileSync } = require("node:fs");
 const path = require("node:path");
-const { buildLeanModeScript } = require("./lean-mode.cjs");
+const { buildLeanModeScript, LEAN_STYLES } = require("./lean-mode.cjs");
 const { shouldBlockHeavyResource, shouldBlockHeavyResponse } = require("./resource-policy.cjs");
 const { isPermissionRequestAllowed, isPermissionCheckAllowed } = require("./permission-policy.cjs");
 const {
@@ -159,9 +159,13 @@ function applyLeanMode(window) {
 }
 
 function installLeanModeHooks(window) {
-  // Apply once per loaded document. Discord SPA route changes keep the document alive,
-  // and the MutationObserver handles new UI; preference changes call applyLeanMode directly.
-  window.webContents.on("dom-ready", () => applyLeanMode(window));
+  // Install CSS through Electron before applying page-side mode classes. This is
+  // more reliable than depending only on an injected style element under page CSP.
+  window.webContents.on("dom-ready", () => {
+    window.webContents.insertCSS(LEAN_STYLES)
+      .then(() => applyLeanMode(window))
+      .catch(() => applyLeanMode(window));
+  });
 }
 
 function setPreference(name, enabled) {
