@@ -1,6 +1,8 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 use std::io;
+#[cfg(windows)]
+use std::sync::{atomic::{AtomicBool, Ordering}, Arc};
 use tauri::webview::{
     NewWindowResponse, PermissionKind, PermissionResponse, Webview, WebviewWindowBuilder,
 };
@@ -38,6 +40,8 @@ const IDENTITY_HOSTS: &[&str] = &[
     "xbox.com",
 ];
 const LEAN_SCRIPT: &str = include_str!("../../lean-mode.js");
+const DISCORD_START_URL: &str = "https://discord.com/app";
+const BOOTSTRAP_URL: &str = "about:blank";
 const VISUAL_MEDIA_EXTENSIONS: &[&str] = &[
     ".gif", ".gifv", ".mp4", ".m4v", ".mov", ".webm", ".ogv", ".avi", ".mkv",
     ".3gp", ".m3u8", ".mpd",
@@ -234,7 +238,7 @@ fn main() {
                 .devtools(cfg!(debug_assertions))
                 .initialization_script(LEAN_SCRIPT)
                 .on_navigation(move |url| {
-                    if is_trusted_url(url) {
+                    if url.as_str() == BOOTSTRAP_URL || is_trusted_url(url) {
                         true
                     } else {
                         open_external(&navigation_handle, url);
@@ -254,12 +258,31 @@ fn main() {
                 .on_permission_request(permission_response)
                 .build()?;
 
+            // The configured bootstrap page is deliberately about:blank. Install
+            // the WebView2 request filter before navigating to Discord so initial
+            // image/video requests cannot race ahead of filter registration.
             #[cfg(windows)]
-            main_window.with_webview(|platform_webview| {
-                if let Err(error) = install_webview2_resource_filter(platform_webview) {
-                    eprintln!("SweetCord WebView2 resource filter could not be installed: {error}");
+            {
+                let filter_installed = Arc::new(AtomicBool::new(false));
+                let install_status = Arc::clone(&filter_installed);
+                main_window.with_webview(move |platform_webview| {
+                    match install_webview2_resource_filter(platform_webview) {
+                        Ok(()) => install_status.store(true, Ordering::SeqCst),
+                        Err(error) => eprintln!("SweetCord WebView2 resource filter could not be installed: {error}"),
+                    }
+                })?;
+
+                if !filter_installed.load(Ordering::SeqCst) {
+                    return Err(io::Error::new(
+                        io::ErrorKind::Other,
+                        "SweetCord could not install the WebView2 resource filter; Discord was not loaded to avoid an unfiltered preview",
+                    ).into());
                 }
-            })?;
+            }
+
+            let start_url = Url::parse(DISCORD_START_URL)
+                .map_err(|error| io::Error::new(io::ErrorKind::InvalidInput, error))?;
+            main_window.navigate(start_url)?;
 
             Ok(())
         })
@@ -281,7 +304,9 @@ mod tests {
 
     #[test]
     fn internal_navigation_requires_https_and_an_allowlisted_host() {
-        assert!(is_trusted_url(&Url::parse("https://discord.com/app").unwrap()));
+        assert_eq!(BOOTSTRAP_URL, "about:blank");
+        assert!(is_trusted_url(&Url::parse(DISCORD_START_URL).unwrap()));
+        assert!(!is_trusted_url(&Url::parse(BOOTSTRAP_URL).unwrap()));
         assert!(is_trusted_url(&Url::parse("https://accounts.google.com/").unwrap()));
         assert!(!is_trusted_url(&Url::parse("http://discord.com/app").unwrap()));
         assert!(!is_trusted_url(&Url::parse("https://discord.com.evil.example/").unwrap()));

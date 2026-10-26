@@ -1,5 +1,25 @@
 # Changelog
 
+## v0.7.0 — Process-tree benchmark and safer WebView2 startup (preview)
+
+- Make the Windows benchmark target one application root by default and include its descendant processes, including relevant Chromium/WebView2 helpers, by process ID.
+- Fail early when the requested root process is not found and clearly report whether descendants are included.
+- Document repeat-run comparisons for idle, text, live microphone call and minimized-call scenarios, with GPU measurements collected separately.
+- Add PowerShell syntax validation to the Windows CI pipeline.
+- Start the experimental Tauri/WebView2 window at `about:blank`, install the native resource filter first, then navigate to Discord. If filter installation fails, the experimental preview does not continue into an unfiltered Discord session.
+
+Known limits: the benchmark is a sampler and adds some process-enumeration overhead; GPU metrics remain manual. The Tauri preview has not been manually validated against live Discord voice on user hardware and is not promoted as the default client.
+
+## v0.6.0 — MIME-aware visual media filtering (preview)
+
+- Inspect response MIME types as a fallback for visual resources whose URL does not expose a file extension.
+- Block recognized video and HLS/DASH response types while explicitly allowing `audio/*` and unknown content types to protect voice compatibility.
+- In Balanced mode, detect recognized animated-image MIME types while permitting still images.
+- Add regression tests for extensionless video, audio, static images, auth routes and window scoping.
+
+Known limits: CI success does not prove real-world voice compatibility or quantify CPU/RAM/GPU savings. The app still runs Discord's web client and Chromium.
+
+
 ## v0.5.0 — Performance profiles and diagnostics (preview)
 
 - Add saved **Extreme Lite**, **Balanced**, and **Custom** performance profiles.

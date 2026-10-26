@@ -45,6 +45,22 @@ jobs:
           node --check desktop-electron/test/permission-policy.test.cjs
           node --check desktop-electron/test/performance-policy.test.cjs
 
+      - name: Check PowerShell benchmark syntax
+        shell: pwsh
+        run: |
+          $tokens = $null
+          $errors = $null
+          [System.Management.Automation.Language.Parser]::ParseFile(
+            "desktop-electron/benchmark-windows.ps1",
+            [ref]$tokens,
+            [ref]$errors
+          ) | Out-Null
+          if ($errors.Count -gt 0) {
+            $errors | ForEach-Object { Write-Error $_.Message }
+            exit 1
+          }
+          Write-Host "PowerShell benchmark syntax OK"
+
       - name: Install desktop dependencies
         run: npm install --prefix desktop-electron
 
@@ -163,7 +179,9 @@ jobs:
           body: |
             **Versioned preview release — not a stable release.**
 
-            This build starts in Extreme Lite. Extreme Lite blocks images and clearly identified video assets; Balanced allows still images while blocking recognizable GIF/APNG/video assets; Custom exposes individual controls. Visual extras and promotions are reduced, microphone-only audio calls are preserved, and camera/display capture are denied. Ambiguous media URLs are allowed to protect voice compatibility.
+            This build starts in Extreme Lite. Extreme Lite blocks images and recognized visual-media requests; response MIME types catch some extensionless videos while audio and unknown response types are allowed. Balanced allows still images while blocking recognizable animated images/video; Custom exposes individual controls. Visual extras and promotions are reduced, microphone-only audio calls are preserved, and camera/display capture are denied.
+
+            The Windows benchmark script can sample the selected app's process tree and export CPU/memory samples. It does not collect GPU counters; compare GPU usage separately in Task Manager and repeat the same workload several times. The Tauri/WebView2 runtime is a separate experimental build and is not the Electron installer attached here.
 
             **Memory note:** This wrapper cannot enforce a hard 1 GiB total-memory ceiling without risking renderer or app crashes. The Discord web client and Electron/Chromium remain active. Compare the packaged installer with official Discord on the same Windows PC before drawing conclusions about CPU, GPU or RAM savings.
 
