@@ -45,6 +45,22 @@ jobs:
           node --check desktop-electron/test/permission-policy.test.cjs
           node --check desktop-electron/test/performance-policy.test.cjs
 
+      - name: Check PowerShell benchmark syntax
+        shell: pwsh
+        run: |
+          $tokens = $null
+          $errors = $null
+          [System.Management.Automation.Language.Parser]::ParseFile(
+            "desktop-electron/benchmark-windows.ps1",
+            [ref]$tokens,
+            [ref]$errors
+          ) | Out-Null
+          if ($errors.Count -gt 0) {
+            $errors | ForEach-Object { Write-Error $_.Message }
+            exit 1
+          }
+          Write-Host "PowerShell benchmark syntax OK"
+
       - name: Install desktop dependencies
         run: npm install --prefix desktop-electron
 
