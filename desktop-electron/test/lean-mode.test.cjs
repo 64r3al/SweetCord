@@ -64,6 +64,15 @@ test("Ultra-Lite hides visual media and leaves voice UI available", () => {
   assert.ok(source.indexOf("if (cfg.textOnlyMode)") < source.indexOf("const avatarSelector"));
 });
 
+test("Ultra-Lite includes a dynamic navigation-pruning policy", () => {
+  const source = buildLeanModeScript(defaults);
+  assert.match(source, /chromeRoutePrefixes/);
+  assert.match(source, /data-sweetcord-hidden/);
+  assert.match(source, /__sweetCordChromePruneObserverInstalled/);
+  assert.ok(source.includes("/quests"));
+  assert.ok(source.includes("/shop"));
+});
+
 test("video and screen-share controls are hidden even with image mode off", () => {
   const source = buildLeanModeScript({ ...defaults, textOnlyMode: false });
   assert.ok(source.includes("sweetcord-voice-only-mode #app-mount video"));
