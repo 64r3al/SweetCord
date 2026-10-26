@@ -55,7 +55,8 @@ const LEAN_STYLES = [
   'html.sweetcord-lean-mode #app-mount [class*="shopUpsell" i],',
   'html.sweetcord-lean-mode #app-mount [class*="nitroBanner" i]',
   '{ display: none !important; }',
-  'html.sweetcord-lean-mode #app-mount [data-sweetcord-hidden="true"]',
+  'html.sweetcord-lean-mode #app-mount [data-sweetcord-hidden="true"],',
+  'html.sweetcord-text-only-mode #app-mount [data-sweetcord-hidden="true"]',
   '{ display: none !important; }',
   'html.sweetcord-lean-mode #app-mount [class*="backdrop" i],',
   'html.sweetcord-lean-mode #app-mount [class*="blur" i]',
@@ -160,9 +161,16 @@ const isRelevantChromeMutationTarget = (element) => {
   return isChromeNavigationItem(element);
 };
 const pruneChromeElement = (element) => {
-  if (!shouldHideChromeElement(element)) return;
+  if (!(element instanceof Element) || !chromeRoot || !chromeRoot.contains(element)) return;
   const target = chromeHideTarget(element);
-  if (target && target !== chromeRoot) target.setAttribute("data-sweetcord-hidden", "true");
+  if (!target || target === chromeRoot) return;
+  if (shouldHideChromeElement(element)) {
+    target.setAttribute("data-sweetcord-pruned", "true");
+    target.setAttribute("data-sweetcord-hidden", "true");
+  } else if (target.getAttribute("data-sweetcord-pruned") === "true") {
+    target.removeAttribute("data-sweetcord-hidden");
+    target.removeAttribute("data-sweetcord-pruned");
+  }
 };
 const pruneChromeSubtree = (node) => {
   if (!(node instanceof Element) || !chromeRoot) return;
