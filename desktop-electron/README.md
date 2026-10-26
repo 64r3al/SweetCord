@@ -1,6 +1,6 @@
 # SweetCord Desktop — Performance Profiles Preview
 
-SweetCord Desktop wraps Discord's official web app. Version **0.6.0** adds response-MIME filtering for extensionless video and animation resources, alongside configurable performance profiles and local diagnostics. It does not replace Discord's renderer or implement a separate Discord protocol.
+SweetCord Desktop wraps Discord's official web app. Version **0.7.0** adds MIME-aware visual-media filtering, a process-tree-aware Windows benchmark, and safer startup ordering for the experimental Tauri/WebView2 filter. It does not replace Discord's renderer or implement a separate Discord protocol.
 
 ## Performance profiles
 
@@ -48,7 +48,7 @@ npm test
 npm run package:win
 ```
 
-The installer is emitted to `desktop-electron/release/SweetCord-Setup-0.5.0.exe`. The packaged files include `permission-policy.cjs`.
+The installer is emitted to `desktop-electron/release/SweetCord-Setup-0.7.0.exe`. The packaged files include `permission-policy.cjs`.
 
 ## Performance menu
 
@@ -62,13 +62,21 @@ The installer is emitted to `desktop-electron/release/SweetCord-Setup-0.5.0.exe`
 
 ## Benchmark on the same PC
 
-Compare official Discord and SweetCord on the same Windows PC, account, network, window size and channel. Measure idle, text chat and an active microphone-based voice call separately.
+Use one root application per run; do not pass multiple installed clients together. The script follows descendant process IDs by default, so Chromium/Electron helper processes and WebView2 renderer processes are included without indiscriminately counting unrelated Edge tabs. Run from the repository root after the selected app has started.
+
+Example for SweetCord Electron:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File .\desktop-electron\benchmark-windows.ps1 -ProcessName SweetCord,Discord,Vesktop -SampleSeconds 60 -IntervalSeconds 2 -OutputPath .\\benchmark-sweetcord.csv
+powershell -ExecutionPolicy Bypass -File .\desktop-electron\benchmark-windows.ps1 -ProcessName SweetCord -SampleSeconds 60 -IntervalSeconds 2 -OutputPath .\electron-idle-run1.csv
 ```
 
-The script now samples repeatedly and reports median/peak working set and private memory, median/P95/peak CPU, and peak process count. Pass `-OutputPath .\\benchmark-sweetcord.csv` to export samples. It does not upload measurements. For GPU, open **Task Manager → Details**, enable **GPU** and **GPU engine**, and compare the same scenario. Include WebView2 host/renderer processes when testing Tauri. CSS-only changes do not guarantee lower CPU/GPU usage; request blocking and removing active media work are the intended optimizations.
+Use `-ProcessName Discord` for official Discord. For the experimental Tauri build, use `-ProcessName "SweetCord Tauri Preview"` if that is the executable name shown in Task Manager. If the name differs, use the executable's name without `.exe`.
+
+Repeat each test three times at minimum, keeping account, network, window size and activity consistent. Test idle, active text chat, a real microphone voice call, and a minimized call. Let the app settle before starting each sample. Use one output CSV per run and scenario; don't compare a busy run against an idle run.
+
+The report includes median/peak working set and private memory, median/P95/peak CPU, and peak process count. It samples Windows process metadata to follow parent/child relationships; this adds some measurement overhead, so use the same script settings for each comparison. It does not upload data. No GPU counters are collected by the script: open **Task Manager → Details**, enable **GPU** and **GPU engine**, and compare the same scenario. Also record dedicated/shared GPU memory from Task Manager's **Performance → GPU** view.
+
+A summed working set can count shared memory more than once; compare private memory as well and treat it as a process-level estimate, not a hard physical-RAM cap. CSS-only changes do not guarantee lower CPU/GPU usage. Measure each change on the same workload before declaring a win.
 
 ## Security and tests
 
