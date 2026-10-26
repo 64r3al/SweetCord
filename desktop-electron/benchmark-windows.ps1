@@ -281,13 +281,14 @@ if (-not [string]::IsNullOrWhiteSpace($SummaryPath)) {
         PowerShellVersion = [string]$PSVersionTable.PSVersion
     }
 
+    $csvFileName = if ($resolvedCsvPath) { [System.IO.Path]::GetFileName($resolvedCsvPath) } else { $null }
     $report = [ordered]@{
         schemaVersion = 1
         generatedAt = (Get-Date).ToString("o")
         environment = $environment
         summary = $summary
         rawSamples = @($samples)
-        csvFileName = if ($resolvedCsvPath) { [System.IO.Path]::GetFileName($resolvedCsvPath) } else { $null }
+        csvFileName = $csvFileName
         privacy = "Saved locally by this script; no telemetry is uploaded."
     }
     $resolvedSummaryPath = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($SummaryPath)
