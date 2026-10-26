@@ -215,10 +215,12 @@ $privateValues = [double[]]@($samples | ForEach-Object { [double]$_.PrivateMB })
 $cpuValues = [double[]]@($samples | ForEach-Object { [double]$_.CPUPercent })
 $instanceValues = [double[]]@($samples | ForEach-Object { [double]$_.ProcessInstances })
 
+$rootSelectionMode = if ($RootProcessId -gt 0) { "exact-pid" } else { "process-name" }
+$summaryRootProcessId = if ($RootProcessId -gt 0) { $RootProcessId } else { $null }
 $summary = [pscustomobject]@{
     Processes = $wantedNames -join ", "
-    RootSelectionMode = if ($RootProcessId -gt 0) { "exact-pid" } else { "process-name" }
-    RootProcessId = if ($RootProcessId -gt 0) { $RootProcessId } else { $null }
+    RootSelectionMode = $rootSelectionMode
+    RootProcessId = $summaryRootProcessId
     RootProcessDescription = $rootProcessDescription
     Scenario = $Scenario
     IncludeDescendants = $IncludeDescendants
@@ -266,14 +268,20 @@ if (-not [string]::IsNullOrWhiteSpace($SummaryPath)) {
     try { $computerInfo = Get-CimInstance -ClassName Win32_ComputerSystem -ErrorAction Stop } catch {}
     try { $cpuInfo = Get-CimInstance -ClassName Win32_Processor -ErrorAction Stop | Select-Object -First 1 } catch {}
 
+    $osName = if ($osInfo) { [string]$osInfo.Caption } else { $null }
+    $osVersion = if ($osInfo) { [string]$osInfo.Version } else { $null }
+    $osBuild = if ($osInfo) { [string]$osInfo.BuildNumber } else { $null }
+    $computerModel = if ($computerInfo) { [string]$computerInfo.Model } else { $null }
+    $cpuName = if ($cpuInfo) { [string]$cpuInfo.Name } else { $null }
+    $installedRamGB = if ($computerInfo) { [math]::Round([double]$computerInfo.TotalPhysicalMemory / 1GB, 2) } else { $null }
     $environment = [pscustomobject]@{
-        OSName = if ($osInfo) { [string]$osInfo.Caption } else { $null }
-        OSVersion = if ($osInfo) { [string]$osInfo.Version } else { $null }
-        OSBuild = if ($osInfo) { [string]$osInfo.BuildNumber } else { $null }
-        ComputerModel = if ($computerInfo) { [string]$computerInfo.Model } else { $null }
-        CPUName = if ($cpuInfo) { [string]$cpuInfo.Name } else { $null }
+        OSName = $osName
+        OSVersion = $osVersion
+        OSBuild = $osBuild
+        ComputerModel = $computerModel
+        CPUName = $cpuName
         LogicalProcessors = [Environment]::ProcessorCount
-        InstalledRAMGB = if ($computerInfo) { [math]::Round([double]$computerInfo.TotalPhysicalMemory / 1GB, 2) } else { $null }
+        InstalledRAMGB = $installedRamGB
         PowerShellVersion = [string]$PSVersionTable.PSVersion
     }
 
