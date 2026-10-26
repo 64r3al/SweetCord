@@ -73,6 +73,13 @@ test("Ultra-Lite includes a dynamic navigation-pruning policy", () => {
   assert.ok(source.includes("/shop"));
 });
 
+test("lightweight style includes additional profile decoration selectors", () => {
+  const source = buildLeanModeScript(defaults);
+  assert.match(source, /profileBadge/);
+  assert.match(source, /userProfileBadge/);
+  assert.match(source, /badgeContainer/);
+});
+
 test("video and screen-share controls are hidden even with image mode off", () => {
   const source = buildLeanModeScript({ ...defaults, textOnlyMode: false });
   assert.ok(source.includes("sweetcord-voice-only-mode #app-mount video"));
