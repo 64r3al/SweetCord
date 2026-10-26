@@ -122,11 +122,6 @@ function Get-Percentile95 {
     return [double]$sorted[$index]
 }
 
-function Format-MB {
-    param([double]$Bytes)
-    return [math]::Round($Bytes / 1MB, 1)
-}
-
 Write-Host ""
 Write-Host "SweetCord resource benchmark" -ForegroundColor Cyan
 if ($RootProcessId -gt 0) {
@@ -217,8 +212,9 @@ $instanceValues = [double[]]@($samples | ForEach-Object { [double]$_.ProcessInst
 
 $rootSelectionMode = if ($RootProcessId -gt 0) { "exact-pid" } else { "process-name" }
 $summaryRootProcessId = if ($RootProcessId -gt 0) { $RootProcessId } else { $null }
+$summaryProcessNames = if ($RootProcessId -gt 0) { $rootProcessDescription } else { $wantedNames -join ", " }
 $summary = [pscustomobject]@{
-    Processes = $wantedNames -join ", "
+    Processes = $summaryProcessNames
     RootSelectionMode = $rootSelectionMode
     RootProcessId = $summaryRootProcessId
     RootProcessDescription = $rootProcessDescription
@@ -247,7 +243,7 @@ Write-Host "- Compare one application at a time. The sampler does not automatica
 Write-Host "- Child processes are included by parent PID; a helper that deliberately detaches from the application process tree may still be missed."
 Write-Host "- GPU utilization and dedicated/shared GPU memory are hardware-driver dependent. Record them separately in Task Manager > Details/Performance."
 Write-Host "- This script is a short sampler, not a complete Windows profiler; launch and shutdown spikes may need a separate cold-start test."
-Write-Host "- No telemetry is uploaded. Samples are only saved when OutputPath is supplied."
+Write-Host "- No telemetry is uploaded. CSV samples are saved when OutputPath is supplied; the summary report is saved when SummaryPath is supplied."
 
 $resolvedCsvPath = $null
 if (-not [string]::IsNullOrWhiteSpace($OutputPath)) {
@@ -291,7 +287,7 @@ if (-not [string]::IsNullOrWhiteSpace($SummaryPath)) {
         environment = $environment
         summary = $summary
         rawSamples = @($samples)
-        csvPath = $resolvedCsvPath
+        csvFileName = if ($resolvedCsvPath) { [System.IO.Path]::GetFileName($resolvedCsvPath) } else { $null }
         privacy = "Saved locally by this script; no telemetry is uploaded."
     }
     $resolvedSummaryPath = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($SummaryPath)
