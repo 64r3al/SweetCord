@@ -78,7 +78,7 @@ const LEAN_STYLES = [
   'html.sweetcord-trim-profile-decorations #app-mount [aria-label*="HypeSquad" i],',
   'html.sweetcord-trim-profile-decorations #app-mount [aria-label*="Early Supporter" i],',
   'html.sweetcord-trim-profile-decorations #app-mount [aria-label*="Server Booster" i],',
-  'html.sweetcord-trim-profile-decorations #app-mount [aria-label*="Verified Bot Developer" i]'
+  'html.sweetcord-trim-profile-decorations #app-mount [aria-label*="Verified Bot Developer" i]',
   '{ display: none !important; }',
   'html.sweetcord-voice-only-mode #app-mount video,',
   'html.sweetcord-voice-only-mode #app-mount [class*="video" i],',
