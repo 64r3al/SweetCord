@@ -126,6 +126,9 @@ Write-Host "This sampler follows process descendants, which helps include Electr
 Write-Host ""
 
 $baseline = @(Get-ProcessSnapshot -Names $wantedNames -IncludeDescendants $IncludeDescendants)
+if ($baseline.Count -eq 0) {
+    throw ("No matching root process found for: {0}. Start the app first and pass its executable name without .exe." -f ($wantedNames -join ", "))
+}
 $baselineById = @{}
 foreach ($item in $baseline) { $baselineById[$item.Id] = $item }
 $lastSampleAt = Get-Date
@@ -180,6 +183,7 @@ $instanceValues = [double[]]@($samples | ForEach-Object { [double]$_.ProcessInst
 
 $summary = [pscustomobject]@{
     Processes = $wantedNames -join ", "
+    IncludeDescendants = $IncludeDescendants
     SampleSeconds = $SampleSeconds
     IntervalSeconds = $IntervalSeconds
     SampleCount = $samples.Count
