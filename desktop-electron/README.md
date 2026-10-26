@@ -1,6 +1,9 @@
 # SweetCord Desktop — Performance Profiles Preview
 
-SweetCord Desktop wraps Discord's official web app. Version **0.7.0** adds MIME-aware visual-media filtering, a process-tree-aware Windows benchmark, and safer startup ordering for the experimental Tauri/WebView2 filter. It does not replace Discord's renderer or implement a separate Discord protocol.
+SweetCord Desktop is an experimental shell around Discord's official web app. It does not replace Discord's renderer or implement a separate Discord protocol.
+
+> [!CAUTION]
+> **Policy gate:** Discord's published Platform Manipulation Policy Explainer says not to modify the Discord client, including its appearance or layout. The experimental customization/filtering route in this repository has no written exception documented here. Do not treat it as an approved third-party client or distribute it as such unless Discord explicitly authorizes the intended behavior. See the [SweetCord Lite master plan](../docs/SWEETCORD-LITE-MASTER-PLAN.md) and [access request draft](../docs/DISCORD-ACCESS-REQUEST.md).
 
 ## Performance profiles
 
@@ -62,21 +65,30 @@ The installer is emitted to `desktop-electron/release/SweetCord-Setup-0.7.0.exe`
 
 ## Benchmark on the same PC
 
-Use one root application per run; do not pass multiple installed clients together. The script follows descendant process IDs by default, so Chromium/Electron helper processes and WebView2 renderer processes are included without indiscriminately counting unrelated Edge tabs. Run from the repository root after the selected app has started.
+Use the benchmark to compare one application workload at a time. It follows child process IDs so Electron/Chromium helper processes and WebView2 renderers can be included. Prefer an exact **main-process PID** when possible; process-name matching can aggregate multiple instances with the same executable name. Run from the repository root after the selected app has started and settled.
 
-Example for SweetCord Electron:
+Find candidate PIDs in PowerShell:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File .\desktop-electron\benchmark-windows.ps1 -ProcessName SweetCord -SampleSeconds 60 -IntervalSeconds 2 -OutputPath .\electron-idle-run1.csv
+Get-CimInstance Win32_Process |
+  Where-Object { $_.Name -match '^(SweetCord|Discord|msedge|chrome)\.exe$' } |
+  Select-Object ProcessId, ParentProcessId, Name
 ```
 
-Use `-ProcessName Discord` for official Discord. For the experimental Tauri build, use `-ProcessName "SweetCord Tauri Preview"` if that is the executable name shown in Task Manager. If the name differs, use the executable's name without `.exe`.
+Example for one SweetCord process tree (replace `1234` with the main process PID from Task Manager → Details):
 
-Repeat each test three times at minimum, keeping account, network, window size and activity consistent. Test idle, active text chat, a real microphone voice call, and a minimized call. Let the app settle before starting each sample. Use one output CSV per run and scenario; don't compare a busy run against an idle run.
+```powershell
+powershell -ExecutionPolicy Bypass -File .\desktop-electron\benchmark-windows.ps1 -RootProcessId 1234 -Scenario idle -SampleSeconds 60 -IntervalSeconds 2 -OutputPath .\benchmarks\sweetcord-idle-run1.csv -SummaryPath .\benchmarks\sweetcord-idle-run1.json
+```
 
-The report includes median/peak working set and private memory, median/P95/peak CPU, and peak process count. It samples Windows process metadata to follow parent/child relationships; this adds some measurement overhead, so use the same script settings for each comparison. It does not upload data. No GPU counters are collected by the script: open **Task Manager → Details**, enable **GPU** and **GPU engine**, and compare the same scenario. Also record dedicated/shared GPU memory from Task Manager's **Performance → GPU** view.
+For name-based fallback, use `-ProcessName Discord` or `-ProcessName SweetCord`; note that all matching root names may be aggregated. Available scenario labels are `idle`, `text-chat`, `voice-call`, `minimized-voice-call`, `media`, and `custom`.
 
-A summed working set can count shared memory more than once; compare private memory as well and treat it as a process-level estimate, not a hard physical-RAM cap. CSS-only changes do not guarantee lower CPU/GPU usage. Measure each change on the same workload before declaring a win.
+Run each comparable scenario three times at minimum: idle, text chat, media (if applicable), microphone-only voice (if supported), and minimized voice (if supported). Keep settings, account, power mode, window size, network, and app version consistent. Let the app settle before each sample. Use a unique CSV and JSON path for every run and never compare a busy run against an idle run.
+
+The CSV contains time-series samples. The optional JSON report adds summary medians/peaks, raw samples, and basic Windows/machine metadata; both remain local unless you choose to share them. The script does not upload telemetry and does not collect message content. Review JSON metadata before sharing it. The script does not collect GPU counters: open **Task Manager → Details**, enable **GPU** and **GPU engine**, and record the same scenario. Also record dedicated/shared GPU memory from **Task Manager → Performance → GPU**.
+
+A summed working set can count shared memory more than once; compare private memory as well and treat both as process-level estimates, not a hard physical-RAM cap. Browser benchmarks are harder to isolate if unrelated tabs share the same browser process tree. Startup latency and GPU usage need separate measurements. Measure each change on the same workload before declaring a win.
+
 
 ## Security and tests
 
